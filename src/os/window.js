@@ -17,7 +17,7 @@ function titlebar(name) {
         whiteSpace: "nowrap",
         paddingLeft: "4px",
         paddingRight: "4px",
-        fontSize: "13px",
+        fontSize: "13px"
     }
 
     
@@ -39,7 +39,7 @@ function titlebar(name) {
     }
 
     windowTitle.push(<div style={nameStyle}>{name}</div>)
-    return <div style={{backgroundColor: "rgb(204, 204, 204)", height: "22px"}} > {windowTitle} </div>
+    return <div style={{backgroundColor: "rgb(204, 204, 204)", height: "22px", userSelect: "none"}} > {windowTitle} </div>
 
 }
 
@@ -57,23 +57,69 @@ class Window extends React.Component {
         this.name = props.init.name;
         this.content = props.init.content;
 
+        this.titleClick = this.titleClick.bind(this);
+        this.titleRelease = this.titleRelease.bind(this);
+        this.titleMove = this.titleMove.bind(this);
 
+        this.lastClickX = 0;
+        this.lastClickY = 0;
+
+        this.draggable = false;
     }
     
+    titleClick(e) {
+        console.log(e)
+        this.lastClickX = e.pageX - this.x
+        this.lastClickY = e.pageY - this.y
+        this.draggable = true
+        console.log(this.lastClickX)
+        console.log(this.y)
+
+        window.addEventListener("mousemove", this.titleMove);
+    }
+
+    titleRelease(e) {
+        console.log("Clack")
+
+        console.log(this.y + " " + this.lastClickY + " " + e.pageY)
+
+        this.x = (e.pageX - this.lastClickX)
+        this.y = (e.pageY - this.lastClickY)
+        this.draggable = false
+        
+        console.log(this.y)
+        this.forceUpdate()
+    }
+
+    titleMove(e) {
+        if (!this.draggable) {
+            return
+        }
+
+        this.x = (e.pageX - this.lastClickX)
+        this.y = (e.pageY - this.lastClickY)
+
+        this.lastClickX = e.pageX - this.x
+        this.lastClickY = e.pageY - this.y
+
+        this.forceUpdate()
+    }
+
+
     render() {
-        const windowStyle = {
+        let windowStyle = {
             position: "absolute",
             display: "block",
-            height: "250px",
-            width: "400px",
-            left: "300px",
-            top: "500px"
+            height: this.height + "px",
+            width: this.width + "px",
+            left: this.x + "px",
+            top: this.y + "px"
         }
 
         let tb = titlebar(this.name)
 
         return <div style = {windowStyle}>
-            <div>{tb}</div>
+            <div onMouseDown={this.titleClick} onMouseUp={this.titleRelease} >{tb}</div>
             
             <div style = {{display: "flex", height: "100%", width:"100%"}}>
                 {this.content}

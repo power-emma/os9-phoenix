@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import './App.css';
 import Window from './window.js';
 import TContent from './testContent';
@@ -16,6 +15,15 @@ function App() {
           height: 300,
           width: 400,
           name: "Skibidi Ohio",
+          content: <TContent />
+        }}/>
+
+        <Window init={{
+          x: 800,
+          y: 300,
+          height: 300,
+          width: 400,
+          name: "Rizzler",
           content: <TContent />
         }}/>
         
