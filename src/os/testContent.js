@@ -8,8 +8,6 @@ function name() {
 class TContent extends React.Component {
 
     render() {
-
-
         let con = name()
         return <div>
             {con}

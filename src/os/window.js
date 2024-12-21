@@ -65,6 +65,8 @@ class Window extends React.Component {
         this.lastClickY = 0;
 
         this.draggable = false;
+
+        this.WMOnClick = props.init.WMOnClick
     }
     
     titleClick(e) {
@@ -117,8 +119,8 @@ class Window extends React.Component {
         }
 
         let tb = titlebar(this.name)
-
-        return <div style = {windowStyle}>
+        console.log(typeof this.WMOnClick)
+        return <div style = {windowStyle} onClick={this.props.init.WMOnClick}>
             <div onMouseDown={this.titleClick} onMouseUp={this.titleRelease} >{tb}</div>
             
             <div style = {{display: "flex", height: "100%", width:"100%"}}>
