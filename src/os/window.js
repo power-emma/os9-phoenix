@@ -76,14 +76,14 @@ const Window = (props) => {
         top: y + "px"
     }} >
         <Draggable handle="strong" onMouseDown={handleMouseDown}>
-            <div style = {{display: "inline-block", height: "100%", width:"100%"}}>
+            <div style = {{display: "inline-block",  height: "100%", width:"100%"}}>
             <strong>
             <div>
                 {tb}
             </div>
             </strong>
         
-            <div style = {{display: "flex", height: "100%", width:"100%"}}>
+            <div style = {{display: "flex", height: "100%", width:"100%", overflow: "auto"}}>
                 {content}
             </div>
             </div>

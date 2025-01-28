@@ -1,4 +1,5 @@
 import './App.css';
+import "bootstrap/dist/css/bootstrap.min.css";
 import Window from './window.js';
 import TContent from './testContent';
 import Desktop from './desktop';
