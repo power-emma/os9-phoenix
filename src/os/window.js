@@ -1,6 +1,9 @@
 import React from 'react';
+import { useReducer } from 'react';
 import ReactDOM from 'react-dom/client';
 import TContent from './testContent.js';
+import Draggable from "react-draggable";
+
 
 function titlebar(name) {
     let windowTitle = []
@@ -22,10 +25,10 @@ function titlebar(name) {
 
     
 
-     for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 12; i++) {
         // Distance from top of bar
         let yOffset = 4
-        let lineColor = (i % 2 == 0) ? "rgb(255, 255, 255)" : "rgb(119, 119, 119)"            
+        let lineColor = (i % 2 === 0) ? "rgb(255, 255, 255)" : "rgb(119, 119, 119)"            
         const sty = {
             position: "absolute",
             top: (i + yOffset) + "px",
@@ -45,90 +48,49 @@ function titlebar(name) {
 
 
 
-class Window extends React.Component {
-    constructor(props) {
+const Window = (props) => {
 
-        super(props);
-        this.x = props.init.x;
-        this.y = props.init.y;
-        this.height = props.init.height;
-        this.width = props.init.width;
-        
-        this.name = props.init.name;
-        this.content = props.init.content;
-
-        this.titleClick = this.titleClick.bind(this);
-        this.titleRelease = this.titleRelease.bind(this);
-        this.titleMove = this.titleMove.bind(this);
-
-        this.lastClickX = 0;
-        this.lastClickY = 0;
-
-        this.draggable = false;
-
-        this.WMOnClick = props.init.WMOnClick
-    }
+    let x = props.init.x;
+    let y = props.init.y;
+    let height = props.init.height;
+    let width = props.init.width;
     
-    titleClick(e) {
-        console.log(e)
-        this.lastClickX = e.pageX - this.x
-        this.lastClickY = e.pageY - this.y
-        this.draggable = true
-        console.log(this.lastClickX)
-        console.log(this.y)
+    let name = props.init.name;
+    let content = props.init.content;
 
-        window.addEventListener("mousemove", this.titleMove);
-    }
+    let tb = titlebar(name)
 
-    titleRelease(e) {
-        console.log("Clack")
-
-        console.log(this.y + " " + this.lastClickY + " " + e.pageY)
-
-        this.x = (e.pageX - this.lastClickX)
-        this.y = (e.pageY - this.lastClickY)
-        this.draggable = false
+    const handleMouseDown = () => {
         
-        console.log(this.y)
-        this.forceUpdate()
-    }
-
-    titleMove(e) {
-        if (!this.draggable) {
-            return
-        }
-
-        this.x = (e.pageX - this.lastClickX)
-        this.y = (e.pageY - this.lastClickY)
-
-        this.lastClickX = e.pageX - this.x
-        this.lastClickY = e.pageY - this.y
-
-        this.forceUpdate()
-    }
+    };
+    
+    
 
 
-    render() {
-        let windowStyle = {
-            position: "absolute",
-            display: "block",
-            height: this.height + "px",
-            width: this.width + "px",
-            left: this.x + "px",
-            top: this.y + "px"
-        }
-
-        let tb = titlebar(this.name)
-        console.log(typeof this.WMOnClick)
-        return <div style = {windowStyle} onClick={this.props.init.WMOnClick}>
-            <div onMouseDown={this.titleClick} onMouseUp={this.titleRelease} >{tb}</div>
-            
-            <div style = {{display: "flex", height: "100%", width:"100%"}}>
-                {this.content}
+    return <div style = {{
+        position: "absolute",
+        display: "block",
+        height: height + "px",
+        width: width + "px",
+        left: x + "px",
+        top: y + "px"
+    }} >
+        <Draggable handle="strong" onMouseDown={handleMouseDown}>
+            <div style = {{display: "inline-block", height: "100%", width:"100%"}}>
+            <strong>
+            <div>
+                {tb}
             </div>
-        </div>
+            </strong>
         
-    }
+            <div style = {{display: "flex", height: "100%", width:"100%"}}>
+                {content}
+            </div>
+            </div>
+        </Draggable>
+    </div>
+        
+    
 }
 
 
