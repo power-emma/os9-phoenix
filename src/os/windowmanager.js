@@ -28,7 +28,7 @@ function makeWindow(x,y,height,width,name,content) {
     windows.push(tempWin)
 }
 
-makeWindow(20, 20, 1200, 1200, "Emma's Website", <PortfolioMain />)
+makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)
 makeWindow(1600, 200, 100, 400, "Side Shit", <TContent />)
 
 const WM = () => {
