@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import aurora from './aurora.png'
 
 class Desktop extends React.Component {
 
@@ -7,14 +8,16 @@ class Desktop extends React.Component {
     render() {
 
         const desktopStyle = {
-            backgroundRepeat: "repeat",
-            backgroundImage: 'url(' + require('./lobotomy.png') + ')',
-            width: "100%",
-            height: "100vh"
+            top: "200px",
+            backgroundPosition: "center center",
+            height: "100vh",
+            width: "100vw",
+            objectFit: "cover",
+            overflow: "hidden"
         }
-        return <div style = {desktopStyle}>
+        return <img style = {desktopStyle} src={aurora}>
 
-        </div>
+        </img>
     }
 }
 

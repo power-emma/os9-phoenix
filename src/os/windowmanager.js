@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import Window from './window';
 import TContent from './testContent';
 import PortfolioMain from '../portfolio/portfoliomain';
+import Orbit from '../orbit/orbitbridge';
 
 let windows = []
 
@@ -29,7 +30,9 @@ function makeWindow(x,y,height,width,name,content) {
 }
 
 makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)
-makeWindow(1600, 200, 100, 400, "Side Shit", <TContent />)
+//makeWindow(1600, 200, 100, 400, "I BEG OF YOU", <TContent />)
+//makeWindow(200, 50, 800, 1000, "orbit.js", <Orbit />)
+
 
 const WM = () => {
 

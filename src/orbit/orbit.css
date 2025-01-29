@@ -1,0 +1,14 @@
+* {
+    margin: 0;
+    padding: 0;
+ }
+
+ #screen {
+    position: relative;
+ }
+
+ #screen > canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }

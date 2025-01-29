@@ -11,12 +11,8 @@ function App() {
       <header className="App-header">
         <Desktop />
         <div>
-        <WM />
-        
-        </div>
-        
-        
-        
+          <WM />
+        </div>        
       </header>
     </div>
   );
