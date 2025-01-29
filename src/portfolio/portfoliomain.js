@@ -39,7 +39,7 @@ function base() {
                     <button className="gradbutton">See My Projects</button>
                 </div>
                 <div className = "col-sm-6 d-flex justify-content-center align-items-center">
-                    <img className="gradborder" src={emma} style={{width: "500px"}}/>
+                    <img className="gradborder" src={emma} style={{width: "500px", imageRendering: "auto"}}/>
                 </div>
             </div>
             <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>

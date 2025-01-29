@@ -174,12 +174,15 @@ function updateScreen() {
         ctx.beginPath();
         // X, Y, Radius, Start (radians), End (radians)
         // Takes into account the zoom and the cameras current position
-        ctx.arc(((temp.posX - camX) * zoomMultiplier) + adjX, ((temp.posY - camY) * zoomMultiplier) + adjY, temp.radius, 0, 2 * Math.PI);
+        ctx.arc(((temp.posX - camX) * zoomMultiplier) + adjX,
+        ((temp.posY - camY) * zoomMultiplier) + adjY,
+        temp.radius,
+        0, 2 * Math.PI);
         // Make it solid
-        ctx.fillStyle = temp.colour;
+        //sctx.fillStyle = temp.colour;
         // Apply to canvas
-        ctx.fill();
-        ctx.stroke();
+        //ctx.fill();
+        //ctx.stroke();
 
         // Needed for every line
         bctx.beginPath();
