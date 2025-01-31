@@ -4,7 +4,7 @@ import Window from './window';
 import TContent from './testContent';
 import PortfolioMain from '../portfolio/portfoliomain';
 import Orbit from '../orbit/orbitbridge';
-
+import aurora from './aurora.png'
 let windows = []
 
 function activeWindowOnClick(e) {
@@ -13,62 +13,99 @@ function activeWindowOnClick(e) {
      
 }
 
-function makeWindow(x,y,height,width,name,content) {
-    console.log("Ran")
-    let tempWin = <Window init={{
-        x: x,
-        y: y,
-        height: height,
-        width: width,
-        name: name,
-        content: content,
-        WMOnClick: {activeWindowOnClick},
-        id: 1
-      }}/>
 
-    windows.push(tempWin)
+
+
+
+function makeIcon() {
+
 }
-
-makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)
-//makeWindow(1600, 200, 100, 400, "I BEG OF YOU", <TContent />)
-makeWindow(200, 50, 800, 1000, "orbit.js", <Orbit />)
 
 
 const WM = () => {
 
-    
+    const [maxZIndex, setMaxZIndex] = useState(0);
+    const [componentList, setComponentList] = useState([]);
 
-    //   let w1 = <Window init={{
-    //     x: 300,
-    //     y: 200,
-    //     height: 300,
-    //     width: 400,
-    //     name: "Skibidi Ohio",
-    //     content: <TContent />,
-    //     WMOnClick: {activeWindowOnClick},
-    //     bringToFront: {bringToFront},
-    //     id: 1
-    //   }}/>
+    function parentClickHandler(id) {
+        let newValue = maxZIndex + 1;
+        setMaxZIndex(newValue);
     
-    // let w2 = <Window init={{
-    //     x: 800,
-    //     y: 300,
-    //     height: 300,
-    //     width: 400,
-    //     name: "Rizzzzler",
-    //     content: <TContent />,
-    //     WMOnClick: {activeWindowOnClick},
+        let newArray = componentList.map((item) =>
+          item.id === id ? { ...item, zIndex: newValue } : item
+        );
+        setComponentList(newArray);
+    }
+
+    const makeWindow = (x,y,height,width,name,content,parentClickHandler) => {
+        let newValue = maxZIndex + 1;
+        setMaxZIndex(newValue);
+        let newID = componentList.length
+        let tempWin = <Window init={{
+            x: x,
+            y: y,
+            height: height,
+            width: width,
+            name: name,
+            content: content,
+            id: newID
+          }}
+           //zIndex={item.zIndex}
+           parentClickHandler={() => parentClickHandler(newID)}
+          />
+    
+          let newArray = []
+          componentList.forEach((item, index) => {
+            newArray.push(item)
+          })
+          newArray.push({
+            window: tempWin,
+            id: componentList.length,
+            zIndex: newValue,
+            baseX: x,
+            baseY: y
+          })
+          setComponentList(newArray);
+          console.log(componentList)
+    }
+
+
+
+
+
+    useEffect(() => {
+        makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)
+        console.log(componentList)
+      }, [])
+
+
+
+    const desktopStyle = {
+        //top: "200px",
+        //backgroundImage: `url(${aurora})`,
+        //backgroundPosition: "center center",
+        //height: "100vh",
+        //width: "100vw",
+        //objectFit: "cover",
+        //overflow: "hidden"
+        //position: "absolute"
+    }
+
+    return <div style={{desktopStyle}}>
+
         
-    //     id: 2
-    //   }}/>
+        <div style= {{}}>
+            {componentList.map((item) => (
+                <div style={{zIndex: item.zIndex, position: "absolute"}} zIndex={item.zIndex} onMouseDown={() => {parentClickHandler(item.id)}}>
+                    {item.window}
+                </div>
+            ))}
+        </div>
+        <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)} } style={{position: "absolute", top: "0px"}} >Emma's Website</button>
+        <button onClick={() =>{makeWindow(200, 50, 800, 1000, "orbit.js", <Orbit />)} } style={{position: "absolute", top: "26px"}} >Orbit.js</button>
+        <button onClick={() =>{makeWindow(1600, 200, 100, 400, "I BEG OF YOU", <TContent />)} } style={{position: "absolute", top: "52px"}} >Test Window</button>
+    </div>
     
-    //windows = [w1, w2]
-
-    
-
-    return <div>
-        {windows}
-    </div>;
     
 
 }

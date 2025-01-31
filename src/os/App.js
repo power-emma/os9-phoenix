@@ -9,8 +9,9 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <Desktop />
+
         <div>
+          <Desktop />
           <WM />
         </div>        
       </header>

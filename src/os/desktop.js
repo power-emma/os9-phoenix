@@ -8,14 +8,15 @@ class Desktop extends React.Component {
     render() {
 
         const desktopStyle = {
-            top: "200px",
+            top: "0px",
             backgroundPosition: "center center",
             height: "100vh",
             width: "100vw",
             objectFit: "cover",
-            overflow: "hidden"
+            overflow: "hidden",
+            position: "absolute"
         }
-        return <img style = {desktopStyle} src={aurora}>
+        return <img style = {desktopStyle} src={aurora} >
 
         </img>
     }

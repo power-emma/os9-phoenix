@@ -3,7 +3,8 @@ import { useReducer } from 'react';
 import ReactDOM from 'react-dom/client';
 import TContent from './testContent.js';
 import Draggable from "react-draggable";
-
+import Close from "./close.png"
+import aurora from './aurora.png'
 
 function titlebar(name) {
     let windowTitle = []
@@ -40,15 +41,16 @@ function titlebar(name) {
 
         windowTitle.push(<div style={sty}></div>) 
     }
-
+    windowTitle.push(<img style={{height: "14px", width: "18px", paddingLeft: "4px", top: "-2px", verticalAlign: "unset", display: "inline"}} src={Close} onClick={() => console.log("click")}/>)
     windowTitle.push(<div style={nameStyle}>{name}</div>)
+    
     return <div style={{backgroundColor: "rgb(204, 204, 204)", height: "22px", userSelect: "none"}} > {windowTitle} </div>
 
 }
 
 
 
-const Window = (props) => {
+const Window = (props, parentClickHandler) => {
 
     let x = props.init.x;
     let y = props.init.y;
@@ -60,10 +62,7 @@ const Window = (props) => {
 
     let tb = titlebar(name)
 
-    const handleMouseDown = () => {
-        
-    };
-    
+
     
 
 
@@ -73,10 +72,12 @@ const Window = (props) => {
         height: height + "px",
         width: width + "px",
         left: x + "px",
-        top: y + "px"
+        top: y + "px",
     }} >
-        <Draggable handle="strong" onMouseDown={handleMouseDown}>
+        
+        <Draggable handle="strong">
             <div style = {{display: "inline-block",  height: "100%", width:"100%"}}>
+            
             <strong>
             <div>
                 {tb}
