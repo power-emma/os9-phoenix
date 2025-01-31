@@ -5,6 +5,9 @@ import TContent from './testContent';
 import PortfolioMain from '../portfolio/portfoliomain';
 import Orbit from '../orbit/orbitbridge';
 import aurora from './aurora.png'
+
+import Draggable from "react-draggable";
+
 let windows = []
 
 function activeWindowOnClick(e) {
@@ -96,9 +99,11 @@ const WM = () => {
         
         <div style= {{}}>
             {componentList.map((item) => (
+                <Draggable onMouseDown={() => {parentClickHandler(item.id)}} handle="strong" >
                 <div style={{zIndex: item.zIndex, position: "absolute"}} zIndex={item.zIndex} onMouseDown={() => {parentClickHandler(item.id)}}>
                     {item.window}
                 </div>
+                </Draggable>
             ))}
         </div>
         <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)} } style={{position: "absolute", top: "0px"}} >Emma's Website</button>

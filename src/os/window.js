@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom/client';
 import TContent from './testContent.js';
 import Draggable from "react-draggable";
 import Close from "./close.png"
-import aurora from './aurora.png'
+
 
 function titlebar(name) {
     let windowTitle = []
@@ -75,7 +75,7 @@ const Window = (props, parentClickHandler) => {
         top: y + "px",
     }} >
         
-        <Draggable handle="strong">
+        
             <div style = {{display: "inline-block",  height: "100%", width:"100%"}}>
             
             <strong>
@@ -88,7 +88,7 @@ const Window = (props, parentClickHandler) => {
                 {content}
             </div>
             </div>
-        </Draggable>
+        
     </div>
         
     
