@@ -7,16 +7,17 @@ function base() {
     return (
         <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", position: "flex", imageRendering: "pixelated", height: "100%", width:"100%"}}> 
 
-            <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>
+            <div className = "h-25 d-flex justify-content-center " style={{color: "white", fontFamily: "Charcoal",}}>
                 <div className = "col-sm-3 d-flex justify-content-center"> 
-
+                <h1 style={{fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", padding: "4vh"}}> Emma Power </h1>
                 </div>
                 <div className = "col-sm-6 justify-content-center align-items-center" >
                 <div className = "h-25 d-flex justify-content-center " style={{color: "white"}}></div>
                     
                 </div>
-                <div className = "col-sm-3 d-flex justify-content-center align-items-center">
-
+                <div className = "col-sm-3 d-flex justify-content-center">
+                    <h1 style={{whiteSpace: "pre", fontSize: "1em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", padding: "4vh"}}> Home   Projects   Photos</h1>
+                    
                 </div>
             </div>
 

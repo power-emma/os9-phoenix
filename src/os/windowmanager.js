@@ -8,8 +8,6 @@ import aurora from './aurora.png'
 
 import Draggable from "react-draggable";
 
-let windows = []
-
 function activeWindowOnClick(e) {
     
     console.log("WM Here :3")
@@ -28,22 +26,22 @@ function makeIcon() {
 const WM = () => {
 
     const [maxZIndex, setMaxZIndex] = useState(0);
-    const [componentList, setComponentList] = useState([]);
+    const [windows, setWindows] = useState([]);
 
     function parentClickHandler(id) {
         let newValue = maxZIndex + 1;
         setMaxZIndex(newValue);
     
-        let newArray = componentList.map((item) =>
+        let newArray = windows.map((item) =>
           item.id === id ? { ...item, zIndex: newValue } : item
         );
-        setComponentList(newArray);
+        setWindows(newArray);
     }
 
     const makeWindow = (x,y,height,width,name,content,parentClickHandler) => {
         let newValue = maxZIndex + 1;
         setMaxZIndex(newValue);
-        let newID = componentList.length
+        let newID = windows.length
         let tempWin = <Window init={{
             x: x,
             y: y,
@@ -53,23 +51,24 @@ const WM = () => {
             content: content,
             id: newID
           }}
-           //zIndex={item.zIndex}
            parentClickHandler={() => parentClickHandler(newID)}
           />
     
           let newArray = []
-          componentList.forEach((item, index) => {
+
+          windows.forEach((item, index) => {
             newArray.push(item)
           })
           newArray.push({
             window: tempWin,
-            id: componentList.length,
+            id: windows.length,
             zIndex: newValue,
             baseX: x,
             baseY: y
           })
-          setComponentList(newArray);
-          console.log(componentList)
+
+          setWindows(newArray);
+          console.log(windows)
     }
 
 
@@ -78,7 +77,7 @@ const WM = () => {
 
     useEffect(() => {
         makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)
-        console.log(componentList)
+        console.log(windows)
       }, [])
 
 
@@ -98,7 +97,7 @@ const WM = () => {
 
         
         <div style= {{}}>
-            {componentList.map((item) => (
+            {windows.map((item) => (
                 <Draggable onMouseDown={() => {parentClickHandler(item.id)}} handle="strong" >
                 <div style={{zIndex: item.zIndex, position: "absolute"}} zIndex={item.zIndex} onMouseDown={() => {parentClickHandler(item.id)}}>
                     {item.window}
