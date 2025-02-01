@@ -1,7 +1,7 @@
 {
   "name": "os9-phoenix",
   "version": "0.1.0",
-  "homepage": "https://power-emma.github.io/os9-phoenix",
+  "homepage": "https://poweremma.com",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",

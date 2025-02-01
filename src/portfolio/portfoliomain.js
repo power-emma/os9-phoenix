@@ -11,8 +11,17 @@ const PortfolioMain = ({init}) => {
     let height = init.height
     let width = init.width
 
+    let em = width/1000 
+    if (height/800 < em) {
+        em = height/800
+    }
+
     let imgHeight = height/1.5 + "px"
-    console.log(imgHeight)
+    let headerSize = 2*em + "em"
+    let h1Size = 4*em + "em"
+    let heropSize = 1.5*em + "em"
+
+    console.log(headerSize)
 
     const [currentPage, setCurrentPage] = useState(<div></div>);
 
@@ -39,10 +48,10 @@ const PortfolioMain = ({init}) => {
         <div className = "h-25 d-flex justify-content-center " style={{color: "white"}}></div>
         
         </div>
-        <div className = "col-sm-3 d-flex justify-content-center" style={{padding: "4vh", paddingRight: "12vw"}}>
-            <h1 style={{whiteSpace: "pre", fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Home")}}>Home</h1>
-            <h1 style={{whiteSpace: "pre", fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Projects")}}>   Projects</h1>
-            <h1 style={{whiteSpace: "pre", fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Photos")}}>   Photos</h1>
+        <div className = "col-sm-3 d-flex justify-content-center" style={{padding: "4vh", paddingRight: "20vw"}}>
+            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Home")}}>Home</h1>
+            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Projects")}}>   Projects</h1>
+            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Photos")}}>   Photos</h1>
 
         </div>
     </div>
@@ -59,17 +68,17 @@ const PortfolioMain = ({init}) => {
                     </div>
                     <div className = "col-sm-4 justify-content-center align-items-center" >
                         <div className = "h-25 d-flex " style={{color: "white"}}>
-                            <h1 style={{}}>Hi!</h1>
+                            <h1 style={{fontSize: h1Size}}>Hi!</h1>
                         </div>
                         <div className = "h-50 d-flex" style={{color: "white", display: 'inline'}}>
-                            <h1 style={{whiteSpace: "pre", fontSize: "5em", display: "inline"}}>I'm </h1>
-                            <h1 style={{fontSize: "5rem", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}}>Emma</h1>
+                            <h1 style={{whiteSpace: "pre", fontSize: h1Size, display: "inline"}}>I'm </h1>
+                            <h1 style={{fontSize: h1Size, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}}>Emma</h1>
                         </div>
                         <div className = "h-25 d-flex " style={{color: "white"}}>
-                            <p style={{fontSize: "1.5em"}}>I'm a software engineering student with a passion for all things digital. I enjoy developing software, working with technology new and old, and taking photos using unique cameras!</p>
+                            <p style={{fontSize: heropSize}}>I'm a software engineering student with a passion for all things digital. I enjoy developing software, working with technology new and old, and taking photos using unique cameras!</p>
                         </div>
                         <br/>
-                        <button className="gradbutton">See My Projects</button>
+                        <button className="gradbutton" onClick={() => {changePage("Projects")}}>See My Projects</button>
                     </div>
                     <div className = "col-sm-6 d-flex justify-content-center align-items-center">
                         <img className="gradborder" src={emma} style={{height: imgHeight, imageRendering: "auto"}}/>
@@ -101,13 +110,13 @@ const PortfolioMain = ({init}) => {
             </div>
             <div className = "col-sm-4 justify-content-center align-items-center" >
                 <div className = "h-25 d-flex " style={{color: "white"}}>
-                    <h1 style={{fontSize: "5em"}}>Projects!</h1>
+                    <h1 style={{fontSize: h1Size}}>Projects!</h1>
                 </div>
                 <div className = "h-50 d-flex" style={{color: "white", display: 'inline'}}>
 
                 </div>
                 <div className = "h-25 d-flex " style={{color: "white"}}>
-                    <p style={{fontSize: "1.5em"}}>Still a WIP</p>
+                    <p style={{fontSize: heropSize}}>Still a WIP</p>
                 </div>
                 <br/>
             </div>
@@ -140,13 +149,13 @@ const PortfolioMain = ({init}) => {
                 </div>
                 <div className = "col-sm-4 justify-content-center align-items-center" >
                     <div className = "h-25 d-flex " style={{color: "white"}}>
-                        <h1 style={{fontSize: "5em"}}>Photos!</h1>
+                        <h1 style={{fontSize: h1Size}}>Photos!</h1>
                     </div>
                     <div className = "h-50 d-flex" style={{color: "white", display: 'inline'}}>
 
                     </div>
                     <div className = "h-25 d-flex " style={{color: "white"}}>
-                        <p style={{fontSize: "1.5em"}}>Still a WIP</p>
+                        <p style={{fontSize: heropSize}}>Still a WIP</p>
                     </div>
                     <br/>
                 </div>
