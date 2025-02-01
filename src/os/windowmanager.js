@@ -107,7 +107,10 @@ const WM = () => {
 
 
     useEffect(() => {
-        makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)
+        makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 200, "Emma's Website", <PortfolioMain init = {{
+            height: window.innerHeight - 60,
+            width: window.innerWidth - 200
+        }}/>)
         console.log(windows)
       }, [])
 
@@ -148,15 +151,29 @@ const WM = () => {
         </div>
         <div className="justify-content-center" style={{float: "right", marginRight: "200px"}}>
             
-            <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)} } style={{position: "absolute", top: "20px", right: "20px", border: "none", background: "none"}} >
+            <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 200, "Emma's Website", 
+            <PortfolioMain init = {{
+                height: window.innerHeight - 60,
+                width: window.innerWidth - 200
+            }}
+
+            />)} } style={{position: "absolute", top: "20px", right: "20px", border: "none", background: "none"}} >
                 <img src={siteIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
                 <h4 style={iconTextStyle}>Emma's Website</h4>
             </button>
-            <button onClick={() =>{makeWindow(200, 50, 800, 1000, "orbit.js", <Orbit />)} } style={{position: "absolute", top: "120px", right: "56px", border: "none", background: "none"}} >
+
+            <button onClick={() =>{makeWindow(200, 200, window.innerHeight / 1.5, window.innerWidth / 2, "orbit.js", 
+            <Orbit init = {{
+                height: window.innerHeight / 1.5,
+                width: window.innerWidth / 2
+            }}
+
+            />)}} 
+            style={{position: "absolute", top: "120px", right: "56px", border: "none", background: "none"}} >
                 <img src={orbitIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
                 <h4 style={iconTextStyle}>Orbit.js</h4>
             </button>
-            <button onClick={() =>{makeWindow(1600, 200, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "220px", right: "36px", border: "none", background: "none"}} >
+            <button onClick={() =>{makeWindow(600, 200, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "220px", right: "36px", border: "none", background: "none"}} >
                 <img src={testIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
                 <h4 style={iconTextStyle}>Test Window</h4>
             </button>

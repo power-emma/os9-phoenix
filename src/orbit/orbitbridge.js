@@ -167,9 +167,12 @@ function updateBodies() {
 }
 
 
-const Orbit = () => {
+const Orbit = ({init}) => {
   const canvasRef = useRef(null)
   const backgroundCanvasRef = useRef(null)
+
+  let height = init.height
+  let width = init.width
 
   const screenDraw = (ctx, bctx, frameCount) => {
     //Update camera based on reference point
@@ -244,8 +247,8 @@ const Orbit = () => {
   }, [])
   return (
     <div style={{width: "100%", height: "100%", position: "relative"}}>
-      <canvas ref={backgroundCanvasRef} width={"1000px"} height={"800px"} style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>
-      <canvas ref={canvasRef} width={"1000px"} height={"800px"}  style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>
+      <canvas ref={backgroundCanvasRef} width={width} height={height} style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>
+      <canvas ref={canvasRef} width={width} height={height}  style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>
     </div>
   );
 };
