@@ -1,4 +1,4 @@
-import {React, useState, useEffect} from 'react';
+import {React, useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom/client';
 import Window from './window';
 import TContent from './testContent';
@@ -22,8 +22,11 @@ const WM = () => {
 
     const [maxZIndex, setMaxZIndex] = useState(0);
     const [windows, setWindows] = useState([]);
+    const stateRef = useRef();
+    stateRef.current = windows
 
     function parentClickHandler(id) {
+        console.log("AAAAAA")
         let newValue = maxZIndex + 1;
         setMaxZIndex(newValue);
     
@@ -34,21 +37,36 @@ const WM = () => {
     }
 
     const deleteWindow = (id) => {
+        //const tempID = Object.assign({}, id);
+
         // let newArray = windows.map((item) =>
-        //   item.id === id ? {...null, zIndex: 0} : item
+        //   item.id === tempID ? null : item
         // );
 
+
+        //const newArray = [...stateRef.current]
+
+
         let newArray = []
-        for (let i = 0; i < windows.length; i++) {
-            if (i === id) {
-                console.log("deleted " + i)
-            } else {
+        console.log(stateRef.current.length)
+
+        for (let i = 0; i < stateRef.current.length; i++) {
+            console.log("testing " + i)
+
+            if (stateRef.current[i].id !== id) {
                 console.log("did not delete " + i)
-                newArray.push(windows[i])
+                
+                newArray.push(stateRef.current[i])
+            } else {
+                console.log("deleted " + i)
+                newArray.push({...null, zIndex: 0})
             }
+
         }
         setWindows(newArray)
-
+        // setCounter((prevState) => {
+        //     return (prevState + 1)
+        // })
         //console.log("deleted window " + id)
     }
 

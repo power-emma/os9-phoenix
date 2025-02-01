@@ -24,6 +24,10 @@ const Window = ({init, closeFunction }) => {
 
     let tb = titlebar(name)
 
+    const deleteFunction = () => {
+
+        closeFunction(id)
+    }
 
     function titlebar(name) {
         let windowTitle = []
@@ -60,7 +64,7 @@ const Window = ({init, closeFunction }) => {
     
             windowTitle.push(<div style={sty}></div>) 
         }
-        windowTitle.push(<img style={{height: "14px", width: "18px", paddingLeft: "4px", top: "-2px", verticalAlign: "unset", display: "inline"}} src={Close} onClick={() => closeFunction(id)}/>)
+        windowTitle.push(<img style={{height: "14px", width: "18px", paddingLeft: "4px", top: "-2px", verticalAlign: "unset", display: "inline"}} src={Close} onClick={() => deleteFunction()}/>)
         windowTitle.push(<div style={nameStyle}>{name}</div>)
         
         return <div style={{backgroundColor: "rgb(204, 204, 204)", height: "22px", userSelect: "none"}} > {windowTitle} </div>
