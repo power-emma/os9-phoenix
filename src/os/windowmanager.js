@@ -5,6 +5,9 @@ import TContent from './testContent';
 import PortfolioMain from '../portfolio/portfoliomain';
 import Orbit from '../orbit/orbitbridge';
 import aurora from './aurora.png'
+import siteIcon from './portfolioIcon.png'
+import orbitIcon from './orbiticon.png'
+import testIcon from './testicon.png'
 
 import Draggable from "react-draggable";
 
@@ -12,14 +15,6 @@ function activeWindowOnClick(e) {
     
     console.log("WM Here :3")
      
-}
-
-
-
-
-
-function makeIcon() {
-
 }
 
 
@@ -38,7 +33,26 @@ const WM = () => {
         setWindows(newArray);
     }
 
-    const makeWindow = (x,y,height,width,name,content,parentClickHandler) => {
+    const deleteWindow = (id) => {
+        // let newArray = windows.map((item) =>
+        //   item.id === id ? {...null, zIndex: 0} : item
+        // );
+
+        let newArray = []
+        for (let i = 0; i < windows.length; i++) {
+            if (i === id) {
+                console.log("deleted " + i)
+            } else {
+                console.log("did not delete " + i)
+                newArray.push(windows[i])
+            }
+        }
+        setWindows(newArray)
+
+        //console.log("deleted window " + id)
+    }
+
+    const makeWindow = (x,y,height,width,name,content) => {
         let newValue = maxZIndex + 1;
         setMaxZIndex(newValue);
         let newID = windows.length
@@ -51,7 +65,7 @@ const WM = () => {
             content: content,
             id: newID
           }}
-           parentClickHandler={() => parentClickHandler(newID)}
+           closeFunction={deleteWindow}
           />
     
           let newArray = []
@@ -74,7 +88,6 @@ const WM = () => {
 
 
 
-
     useEffect(() => {
         makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)
         console.log(windows)
@@ -93,6 +106,16 @@ const WM = () => {
         //position: "absolute"
     }
 
+    const iconTextStyle = {backgroundColor: "rgb(204, 204, 204)", 
+        fontFamily: "Geneva", 
+        fontStyle: "normal", 
+        fontSize: "14pt", 
+        paddingLeft: "4px", 
+        paddingRight: "4px", 
+        paddingTop: "4px", 
+        textAlign: "center"
+    }
+
     return <div style={{desktopStyle}}>
 
         
@@ -105,9 +128,21 @@ const WM = () => {
                 </Draggable>
             ))}
         </div>
-        <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)} } style={{position: "absolute", top: "0px"}} >Emma's Website</button>
-        <button onClick={() =>{makeWindow(200, 50, 800, 1000, "orbit.js", <Orbit />)} } style={{position: "absolute", top: "26px"}} >Orbit.js</button>
-        <button onClick={() =>{makeWindow(1600, 200, 100, 400, "I BEG OF YOU", <TContent />)} } style={{position: "absolute", top: "52px"}} >Test Window</button>
+        <div className="justify-content-center" style={{float: "right", marginRight: "200px"}}>
+            
+            <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 400, "Emma's Website", <PortfolioMain />)} } style={{position: "absolute", top: "20px", right: "20px", border: "none", background: "none"}} >
+                <img src={siteIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
+                <h4 style={iconTextStyle}>Emma's Website</h4>
+            </button>
+            <button onClick={() =>{makeWindow(200, 50, 800, 1000, "orbit.js", <Orbit />)} } style={{position: "absolute", top: "120px", right: "56px", border: "none", background: "none"}} >
+                <img src={orbitIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
+                <h4 style={iconTextStyle}>Orbit.js</h4>
+            </button>
+            <button onClick={() =>{makeWindow(1600, 200, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "220px", right: "36px", border: "none", background: "none"}} >
+                <img src={testIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
+                <h4 style={iconTextStyle}>Test Window</h4>
+            </button>
+        </div>
     </div>
     
     
