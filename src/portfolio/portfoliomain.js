@@ -19,6 +19,7 @@ const PortfolioMain = ({init}) => {
     let imgHeight = height/1.5 + "px"
     let headerSize = 2*em + "em"
     let h1Size = 4*em + "em"
+    let h2Size = 3*em + "em"
     let heropSize = 1.5*em + "em"
 
     console.log(headerSize)
@@ -81,7 +82,7 @@ const PortfolioMain = ({init}) => {
                         <button className="gradbutton" onClick={() => {changePage("Projects")}}>See My Projects</button>
                     </div>
                     <div className = "col-sm-6 d-flex justify-content-center align-items-center">
-                        <img className="gradborder" src={emma} style={{height: imgHeight, imageRendering: "auto"}}/>
+                        <img className="gradImgBorder" src={emma} style={{height: imgHeight, imageRendering: "auto"}}/>
                     </div>
                 </div>
                 <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>
@@ -100,41 +101,73 @@ const PortfolioMain = ({init}) => {
     }
     
     const proj = () => {
-        return <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", position: "flex", imageRendering: "pixelated", height: "100%", width:"100%"}}> 
+        return <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", backgroundColor: "#000", position: "flex", imageRendering: "pixelated", width:"100%"}}> 
     
         {header}
 
-        <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>
+        <div className = "h-75 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
-            <div className = "col-sm-4 justify-content-center align-items-center" >
-                <div className = "h-25 d-flex " style={{color: "white"}}>
-                    <h1 style={{fontSize: h1Size}}>Projects!</h1>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px"}} >
+                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+                    <h1 style={{fontSize: h2Size}}>This Website!</h1>
                 </div>
-                <div className = "h-50 d-flex" style={{color: "white", display: 'inline'}}>
-
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                    <p style={{fontSize: heropSize}}>Combining modern web design paradigms with the aesthetics of an operating system from the 90's, this React based website allows for a unique, window based take to display other JavaScript based applications</p>
                 </div>
-                <div className = "h-25 d-flex " style={{color: "white"}}>
-                    <p style={{fontSize: heropSize}}>Still a WIP</p>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                    <p style={{fontSize: heropSize}}>Tip: Move the Windows Around!</p>
                 </div>
                 <br/>
             </div>
-            <div className = "col-sm-6 d-flex justify-content-center align-items-center">
+            <div className = "col-sm-2 d-flex justify-content-center align-items-center">
                 
             </div>
         </div>
-        <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>
-            <div className = "col-sm-3 d-flex justify-content-center"> 
+
+        <div className = "h-75 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", marginTop: "50px"}}>
+            <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
-            <div className = "col-sm-6 justify-content-center align-items-center" >
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px"}} >
+                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+                    <h1 style={{fontSize: h2Size}}>Orbit.JS</h1>
+                </div>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                    <p style={{fontSize: heropSize}} >Displays an accurate model of any arbitrary amount of celestial bodies. Allows for visualization of Solar Systems as well as other gravitational phenomena</p>
+                </div>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                    <p style={{fontSize: heropSize}}> Coming Soon: Interactive Planet Placement</p>
+                </div>
+                <br/>
+            </div>
+            <div className = "col-sm-2 d-flex justify-content-center align-items-center">
                 
             </div>
-            <div className = "col-sm-3 d-flex justify-content-center align-items-center">
+        </div>
+
+        <div className = "h-75 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", marginTop: "50px"}}>
+            <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px"}} >
+                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+                    <h1 style={{fontSize: h2Size}}>Other Projects</h1>
+                </div>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                    <p style={{fontSize: heropSize}} >Coming Soon (I swear ive written more than 2 applications in my lifetime) </p>
+                </div>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                    <p style={{fontSize: heropSize}}>Hint! Its a pain to port Java and C apps to React!</p>
+                </div>
+                <br/>
+            </div>
+            <div className = "col-sm-2 d-flex justify-content-center align-items-center">
+                
+            </div>
         </div>
+
     </div>
     }
 

@@ -131,7 +131,6 @@ const WM = () => {
         fontSize: "14pt", 
         paddingLeft: "4px", 
         paddingRight: "4px", 
-
         textAlign: "center"
     }
 
