@@ -128,12 +128,10 @@ const WM = () => {
     }
 
     const iconTextStyle = {backgroundColor: "rgb(204, 204, 204)", 
-        fontFamily: "Geneva", 
-        fontStyle: "normal", 
         fontSize: "14pt", 
         paddingLeft: "4px", 
         paddingRight: "4px", 
-        paddingTop: "4px", 
+
         textAlign: "center"
     }
 
