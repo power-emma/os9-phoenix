@@ -3,7 +3,7 @@ import { useReducer } from 'react';
 import ReactDOM from 'react-dom/client';
 import TContent from './testContent.js';
 import Draggable from "react-draggable";
-import Close from "./close.png"
+import Close from "./images/close.png"
 
 
 

@@ -114,7 +114,7 @@ const PortfolioMain = ({init}) => {
                     <h1 style={{fontSize: h2Size}}>This Website!</h1>
                 </div>
                 <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
-                    <p style={{fontSize: heropSize}}>Combining modern web design paradigms with the aesthetics of an operating system from the 90's, this React based website allows for a unique, window based take to display other JavaScript based applications</p>
+                    <p style={{fontSize: heropSize}}>Combining modern web design paradigms with the aesthetics of an operating system from the 90's, this React based website allows for a unique, window based take to display other web based applications</p>
                 </div>
                 <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
                     <p style={{fontSize: heropSize}}>Tip: Move the Windows Around!</p>
@@ -156,10 +156,10 @@ const PortfolioMain = ({init}) => {
                     <h1 style={{fontSize: h2Size}}>Other Projects</h1>
                 </div>
                 <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
-                    <p style={{fontSize: heropSize}} >Coming Soon (I swear ive written more than 2 applications in my lifetime) </p>
+                    <p style={{fontSize: heropSize}} >Check out my GitHub page for projects in other languages like C and Java, as well as the source code of this website!</p>
                 </div>
                 <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
-                    <p style={{fontSize: heropSize}}>Hint! Its a pain to port Java and C apps to React!</p>
+                    <a className="gradbutton" href='https://github.com/power-emma'>See my GitHub</a>
                 </div>
                 <br/>
             </div>

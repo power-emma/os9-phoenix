@@ -1,6 +1,6 @@
 import {React, useEffect, useRef, useState} from 'react';
 import ReactDOM from 'react-dom/client';
-import "./orbit.css"
+
 
 // Gravitational Constant
 var g = 0.000000000066743;
@@ -20,7 +20,7 @@ var bodies = [];
 var framerate = 60;
 
 // The simulation will run at this many times faster
-var timeMultiplier = 100000;
+var timeMultiplier = 10000;
 
 
 // Amount to zoom out

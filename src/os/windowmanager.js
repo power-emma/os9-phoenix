@@ -1,15 +1,23 @@
+// React Imports
 import {React, useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom/client';
-import Window from './window';
-import TContent from './testContent';
-import PortfolioMain from '../portfolio/portfoliomain';
-import Orbit from '../orbit/orbitbridge';
-import aurora from './aurora.png'
-import siteIcon from './portfolioIcon.png'
-import orbitIcon from './orbiticon.png'
-import testIcon from './testicon.png'
-
 import Draggable from "react-draggable";
+
+// Window Imports
+import Window from './window';
+
+// Applications
+import TContent from './testContent';
+import PortfolioMain from '../apps/portfolio/portfoliomain';
+import Orbit from '../apps/orbit/orbitbridge';
+
+// Images
+import aurora from './images/aurora.png'
+import siteIcon from './icons/portfolioIcon.png'
+import orbitIcon from './icons/orbiticon.png'
+import testIcon from './icons/testicon.png'
+
+
 
 function activeWindowOnClick(e) {
     
@@ -134,6 +142,36 @@ const WM = () => {
         textAlign: "center"
     }
 
+    const desktopIcons = <div className="justify-content-center" style={{float: "right", marginRight: "200px"}}>
+        <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 200, "Emma's Website", 
+            <PortfolioMain init = {{
+                height: window.innerHeight - 60,
+                width: window.innerWidth - 200
+            }}
+        />)} } style={{position: "absolute", top: "20px", right: "20px", border: "none", background: "none"}} >
+            <img src={siteIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
+            <h4 style={iconTextStyle}>Emma's Website</h4>
+        </button>
+
+        <button onClick={() =>{makeWindow(20, 20, window.innerHeight / 1.5, window.innerWidth / 2, "orbit.js", 
+            <Orbit init = {{
+                height: window.innerHeight / 1.5,
+                width: window.innerWidth / 2
+            }}
+        />)}} 
+        style={{position: "absolute", top: "120px", right: "56px", border: "none", background: "none"}} >
+            <img src={orbitIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
+            <h4 style={iconTextStyle}>Orbit.js</h4>
+        </button>
+
+        <button onClick={() =>{makeWindow(600, 200, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "220px", right: "36px", border: "none", background: "none"}} >
+            <img src={testIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
+            <h4 style={iconTextStyle}>Test Window</h4>
+        </button>
+    </div>
+
+
+
     return <div style={{desktopStyle}}>
 
         
@@ -146,35 +184,8 @@ const WM = () => {
                 </Draggable>
             ))}
         </div>
-        <div className="justify-content-center" style={{float: "right", marginRight: "200px"}}>
-            
-            <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 200, "Emma's Website", 
-            <PortfolioMain init = {{
-                height: window.innerHeight - 60,
-                width: window.innerWidth - 200
-            }}
-
-            />)} } style={{position: "absolute", top: "20px", right: "20px", border: "none", background: "none"}} >
-                <img src={siteIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
-                <h4 style={iconTextStyle}>Emma's Website</h4>
-            </button>
-
-            <button onClick={() =>{makeWindow(200, 200, window.innerHeight / 1.5, window.innerWidth / 2, "orbit.js", 
-            <Orbit init = {{
-                height: window.innerHeight / 1.5,
-                width: window.innerWidth / 2
-            }}
-
-            />)}} 
-            style={{position: "absolute", top: "120px", right: "56px", border: "none", background: "none"}} >
-                <img src={orbitIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
-                <h4 style={iconTextStyle}>Orbit.js</h4>
-            </button>
-            <button onClick={() =>{makeWindow(600, 200, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "220px", right: "36px", border: "none", background: "none"}} >
-                <img src={testIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
-                <h4 style={iconTextStyle}>Test Window</h4>
-            </button>
-        </div>
+        {desktopIcons}
+        
     </div>
     
     

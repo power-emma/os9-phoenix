@@ -1,22 +1,16 @@
-import './App.css';
 import "bootstrap/dist/css/bootstrap.min.css";
 import Window from './window.js';
 import TContent from './testContent';
 import Desktop from './desktop';
 import WM from './windowmanager';
 
-function App() {
+function OS9Main() {
   return (
-    <div className="App">
-      <header className="App-header">
-
-        <div>
-          <Desktop />
-          <WM />
-        </div>        
-      </header>
+    <div className="Top Level">
+      <Desktop />
+      <WM />      
     </div>
   );
 }
 
-export default App;
+export default OS9Main;
