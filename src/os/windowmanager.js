@@ -33,6 +33,12 @@ const WM = () => {
     const stateRef = useRef();
     stateRef.current = windows
 
+    let practicalWidth = window.innerWidth - 200
+    if (window.innerWidth < 1265) {
+        practicalWidth = window.innerWidth
+    }
+
+
     function parentClickHandler(id) {
         console.log("AAAAAA")
         let newValue = maxZIndex + 1;
@@ -115,9 +121,9 @@ const WM = () => {
 
 
     useEffect(() => {
-        makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 200, "Emma's Website", <PortfolioMain init = {{
+        makeWindow(20, 20, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", <PortfolioMain init = {{
             height: window.innerHeight - 60,
-            width: window.innerWidth - 200
+            width: practicalWidth - 40
         }}/>)
         console.log(windows)
       }, [])
