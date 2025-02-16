@@ -234,7 +234,7 @@ const Orbit = ({init}) => {
     let animationFrameId
     backgroundContext.fillStyle = '#FFFFFF'
     backgroundContext.fillRect(0,0, context.canvas.width, context.canvas.height);
-    //Our first draw
+
     const render = () => {
       frameCount++
       updateBodies()

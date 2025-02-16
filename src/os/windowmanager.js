@@ -10,12 +10,14 @@ import Window from './window';
 import TContent from './testContent';
 import PortfolioMain from '../apps/portfolio/portfoliomain';
 import Orbit from '../apps/orbit/orbitbridge';
+import Raycast from '../apps/raycast/raycast';
 
 // Images
 import aurora from './images/aurora.png'
-import siteIcon from './icons/portfolioIcon.png'
-import orbitIcon from './icons/orbiticon.png'
-import testIcon from './icons/testicon.png'
+import siteIcon from './icons/portfolio.png'
+import orbitIcon from './icons/orbit.png'
+import raycastIcon from './icons/raycast.png'
+import testIcon from './icons/test.png'
 
 
 
@@ -37,6 +39,7 @@ const WM = () => {
     if (window.innerWidth < 1265) {
         practicalWidth = window.innerWidth
     }
+        
 
 
     function parentClickHandler(id) {
@@ -165,12 +168,22 @@ const WM = () => {
                 width: window.innerWidth / 2
             }}
         />)}} 
-        style={{position: "absolute", top: "120px", right: "56px", border: "none", background: "none"}} >
+        style={{position: "absolute", top: "120px", right: "58px", border: "none", background: "none"}} >
             <img src={orbitIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Orbit.js</h4>
         </button>
 
-        <button onClick={() =>{makeWindow(600, 200, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "220px", right: "36px", border: "none", background: "none"}} >
+        <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, practicalWidth - 40, "Raycast Engine", 
+            <Raycast init = {{
+            height: window.innerHeight - 60,
+            width: practicalWidth - 40
+            }}/>
+        )} } style={{position: "absolute", top: "220px", right: "58px", border: "none", background: "none"}} >
+            <img src={raycastIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
+            <h4 style={iconTextStyle}>Raycast</h4>
+        </button>
+
+        <button onClick={() =>{makeWindow(600, 200, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "320px", right: "36px", border: "none", background: "none"}} >
             <img src={testIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Test Window</h4>
         </button>
