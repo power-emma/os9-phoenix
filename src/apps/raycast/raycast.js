@@ -15,14 +15,22 @@ const Raycast = ({init}) => {
 
     // Grid of blocks for the world map
     const worldMap = [
-        [1,1,1,1,1,1,1,1],
-        [1,0,0,0,0,0,0,1],
-        [1,0,0,0,0,1,0,1],
-        [1,0,0,0,0,1,0,1],
-        [1,1,1,0,0,0,0,1],
-        [1,0,1,0,0,0,0,1],
-        [1,0,0,0,0,0,0,1],
-        [1,1,1,1,1,1,1,1]
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,0,4,0,0,0,0,0,0,2,0,0,1],
+        [1,0,0,0,4,4,0,0,0,0,0,0,2,0,6,1],
+        [1,0,0,0,0,4,0,0,0,0,0,0,2,0,6,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,2,0,6,1],
+        [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,2,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,3,0,0,0,0,0,0,0,0,0,1],
+        [1,4,0,0,0,0,4,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,5,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,6,0,2,3,3,3,3,1],
+        [1,0,0,0,0,0,0,0,0,0,2,0,0,0,0,5],
+        [1,0,0,0,0,0,0,0,0,0,2,0,3,4,0,5],
+        [1,0,0,0,0,0,0,0,0,0,2,0,6,5,0,5],
+        [1,6,0,0,0,0,0,0,0,0,0,0,0,0,0,5],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
     ];
 
     // Control Booleans
@@ -32,8 +40,8 @@ const Raycast = ({init}) => {
     let downPressed = 0; 
 
     // Player Position
-    let posX = 3
-    let posY = 2
+    let posX = 13
+    let posY = 4
     // Player Direction
     let dirX = -1
     let dirY = 0
@@ -78,8 +86,8 @@ const Raycast = ({init}) => {
     }
 
     const controls = () => {
-        let rotSpeed = 0.02;
-		let moveSpeed = 0.02;
+        let rotSpeed = 0.03;
+		let moveSpeed = 0.04;
 
 		if (leftPressed) {
 
@@ -209,7 +217,8 @@ const Raycast = ({init}) => {
             let ray = {
                 start: drawStart,
                 end: drawEnd,
-                side: side
+                side: side,
+                type: worldMap[mapX][mapY]
             }
 
             tempRays.push(ray)
@@ -225,12 +234,46 @@ const Raycast = ({init}) => {
         // Draw Lines
         for (let i = 0; i < rays.length; i++) {
             ctx.beginPath();
-            // Something to accentuate corners
-            if (rays[i].side == 1) {
-                ctx.strokeStyle = "Red"
-            } else {
-                ctx.strokeStyle = "Blue"
+
+            let red = 0
+            let green = 0
+            let blue = 0
+            switch (rays[i].type) {
+                case 1:
+                    red = 255
+                    break;
+                case 2:
+                    red = 255
+                    green = 128
+                    break;
+                case 3:
+                    red = 255
+                    green = 255
+                    break;
+                case 4:
+                    green = 255
+                    break;
+                case 5:
+                    blue = 255
+                    break;
+                case 6:
+                    red = 187
+                    blue = 255
+                    break;
+
             }
+
+            // Shadow effect makes corners more visible
+            if (rays[i].side == 1) {
+                red = red * 0.7
+                green = green * 0.7
+                blue = blue * 0.7
+            }
+            ctx.strokeStyle = `rgb(${red}, ${green}, ${blue})`;
+            
+            
+
+
             // Top of line (calculated by raycast)
             ctx.moveTo(i, rays[i].start);
             // Bottom of line (calculated by raycast)
