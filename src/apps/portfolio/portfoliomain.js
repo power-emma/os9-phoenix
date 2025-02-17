@@ -16,11 +16,25 @@ const PortfolioMain = ({init}) => {
         em = height/800
     }
 
+    let defaultPadding = "2vh"
+
+
+
+    
+    let mobile = false
+    if (height > width) {
+        mobile = true
+        em = height/1200
+        defaultPadding = "6vh"
+    }
+
     let imgHeight = height/1.5 + "px"
     let headerSize = 2*em + "em"
     let h1Size = 4*em + "em"
     let h2Size = 3*em + "em"
     let heropSize = 1.5*em + "em"
+
+    
 
     console.log(headerSize)
 
@@ -41,7 +55,8 @@ const PortfolioMain = ({init}) => {
 
     }
 
-    const header = <div className = "h-25 d-flex justify-content-center " style={{color: "white", fontFamily: "Charcoal",}}>
+    
+    let header = <div className = "h-25 d-flex justify-content-center " style={{color: "white", fontFamily: "Charcoal",}}>
         <div className = "col-sm-3 d-flex justify-content-center"> 
             <h1 style={{fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", padding: "4vh"}}> Emma Power </h1>
         </div>
@@ -57,9 +72,53 @@ const PortfolioMain = ({init}) => {
         </div>
     </div>
 
+    if (mobile) {
+        header = <div className = "h-25 d-flex justify-content-center " style={{color: "white", fontFamily: "Charcoal",}}>
+            <div className = "d-flex justify-content-center"> 
+                <h1 style={{fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", padding: "4vh"}}> Emma Power </h1>
+            </div>
+            <div className = "justify-content-center align-items-center" >
+            <div className = "h-25 d-flex justify-content-center " style={{color: "white"}}></div>
+            
+            </div>
+            <div className = "" style={{padding: "4vh", paddingRight: "5vw"}}>
+                <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Home")}}>Home</h1>
+                <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Projects")}}>Projects</h1>
+                <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Photos")}}>Photos</h1>
+
+            </div>
+        </div>
+    }
+
     const home = () => {
+        let emmaPhoto = ""
+        let emmaPhotoMobile = ""
+        let emmaHeight = "100%"
+        if (! mobile) {
+
+        
+            emmaPhoto = <div className = "col-sm-6 d-flex justify-content-center align-items-center" >
+            <img className="gradImgBorder" src={emma} style={{height: imgHeight, imageRendering: "auto"}}/>
+        </div>
+        emmaPhotoMobile = <div>
+        <div className = "h-100 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", paddingTop: "5vh"}}>
+
+                <img src={null} style={{imageRendering: "auto"}}/>
+            </div>
+        </div>
+        } else {
+            emmaHeight = "130%"
+            emmaPhotoMobile = <div>
+            <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", paddingTop: "5vh"}}>
+
+                <img className="gradImgBorder" src={emma} style={{height: imgHeight, imageRendering: "auto"}}/>
+                </div>
+            </div>
+
+        }
+
         return (
-            <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", position: "flex", imageRendering: "pixelated", height: "100%", width:"100%"}}> 
+            <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", backgroundColor: "#000", position: "flex", imageRendering: "pixelated", backgroundSize: "cover"}}> 
     
                 {header}
 
@@ -67,7 +126,7 @@ const PortfolioMain = ({init}) => {
                     <div className = "col-sm-2 d-flex justify-content-center"> 
     
                     </div>
-                    <div className = "col-sm-4 justify-content-center align-items-center" >
+                    <div className = "col-sm-4 justify-content-center align-items-center"  style = {{padding: defaultPadding}}>
                         <div className = "h-25 d-flex " style={{color: "white"}}>
                             <h1 style={{fontSize: h1Size}}>Hi!</h1>
                         </div>
@@ -80,20 +139,30 @@ const PortfolioMain = ({init}) => {
                         </div>
                         <br/>
                         <button className="gradbutton" onClick={() => {changePage("Projects")}}>See My Projects</button>
-                    </div>
-                    <div className = "col-sm-6 d-flex justify-content-center align-items-center">
-                        <img className="gradImgBorder" src={emma} style={{height: imgHeight, imageRendering: "auto"}}/>
-                    </div>
-                </div>
-                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>
-                    <div className = "col-sm-3 d-flex justify-content-center"> 
-    
-                    </div>
-                    <div className = "col-sm-6 justify-content-center align-items-center" >
+                        <br/>
                         
                     </div>
-                    <div className = "col-sm-3 d-flex justify-content-center align-items-center">
-    
+                    {emmaPhoto}
+                </div>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>
+                    {emmaPhotoMobile}
+                    
+                </div>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", marginTop: "50px", padding: "2vh"}}>
+                    <div className = "col-sm-2 d-flex justify-content-center"> 
+
+                    </div>
+                    <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px"}} >
+                        <div className = "h-50 d-flex align-items-center" style={{color: "white"}}>
+                            <h1 style={{fontSize: h2Size}}>Treat this like a normal desktop!</h1>
+                        </div>
+                        <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                            <p style={{fontSize: heropSize}} >Move and close windows just like you are used to! . The desktop icons will launch apps in their own windows too!</p>
+                        </div>
+                        <br/>
+                    </div>
+                    <div className = "col-sm-2 d-flex justify-content-center align-items-center">
+                        
                     </div>
                 </div>
             </div>

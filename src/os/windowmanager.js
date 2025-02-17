@@ -152,10 +152,10 @@ const WM = () => {
     }
 
     const desktopIcons = <div className="justify-content-center" style={{float: "right", marginRight: "200px"}}>
-        <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, window.innerWidth - 200, "Emma's Website", 
+        <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", 
             <PortfolioMain init = {{
                 height: window.innerHeight - 60,
-                width: window.innerWidth - 200
+                width: practicalWidth - 40
             }}
         />)} } style={{position: "absolute", top: "20px", right: "20px", border: "none", background: "none"}} >
             <img src={siteIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
@@ -183,7 +183,7 @@ const WM = () => {
             <h4 style={iconTextStyle}>Raycast</h4>
         </button>
 
-        <button onClick={() =>{makeWindow(600, 200, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "320px", right: "36px", border: "none", background: "none"}} >
+        <button onClick={() =>{makeWindow(40, 40, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "320px", right: "36px", border: "none", background: "none"}} >
             <img src={testIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Test Window</h4>
         </button>
