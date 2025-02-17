@@ -34,10 +34,15 @@ const WM = () => {
     const [windows, setWindows] = useState([]);
     const stateRef = useRef();
     stateRef.current = windows
-
+    let mobile = false
     let practicalWidth = window.innerWidth - 200
     if (window.innerWidth < 1265) {
         practicalWidth = window.innerWidth
+    }
+
+    if (window.innerHeight > window.innerWidth) {
+        mobile = true
+
     }
         
 
@@ -98,7 +103,8 @@ const WM = () => {
             width: width,
             name: name,
             content: content,
-            id: newID
+            id: newID,
+            mobile: mobile
           }}
            closeFunction={deleteWindow}
           />

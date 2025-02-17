@@ -24,6 +24,11 @@ const Window = ({init, closeFunction }) => {
 
     let tb = titlebar(name)
 
+    if (init.mobile) {
+        tb = titlebarMobile(name)
+    }
+
+
     const deleteFunction = () => {
 
         closeFunction(id)
@@ -68,6 +73,48 @@ const Window = ({init, closeFunction }) => {
         windowTitle.push(<div style={nameStyle}>{name}</div>)
         
         return <div style={{backgroundColor: "rgb(204, 204, 204)", height: "22px", userSelect: "none"}} > {windowTitle} </div>
+    
+    }   
+
+    function titlebarMobile(name) {
+        let windowTitle = []
+    
+        const nameStyle = {
+            class: "window",
+            position: "absolute",
+            fontFamily: "Charcoal",
+            fontWeight: "lighter",
+            left: "50%",
+            transform: "translateX(-50%)",
+            backgroundColor: "rgb(204, 204, 204)",
+            top: "2px",
+            whiteSpace: "nowrap",
+            paddingLeft: "4px",
+            paddingRight: "4px",
+            fontSize: "20px"
+        }
+    
+        
+    
+        for (let i = 0; i < 12; i++) {
+            // Distance from top of bar
+            let yOffset = 4
+            let lineColor = (i % 2 === 0) ? "rgb(255, 255, 255)" : "rgb(119, 119, 119)"            
+            const sty = {
+                position: "absolute",
+                top: (2*i + yOffset) + "px",
+                backgroundColor: lineColor,
+                height: "2px",
+                left: "37px",
+                right: "8px"
+            }
+    
+            windowTitle.push(<div style={sty}></div>) 
+        }
+        windowTitle.push(<img style={{height: "28px", width: "30px", paddingLeft: "6px", paddingTop: "4px", verticalAlign: "unset", display: "inline"}} src={Close} onClick={() => deleteFunction()} onTouchEnd={() => deleteFunction()} />)
+        windowTitle.push(<div style={nameStyle}>{name}</div>)
+        
+        return <div style={{backgroundColor: "rgb(204, 204, 204)", height: "32px", userSelect: "none"}} > {windowTitle} </div>
     
     }
 
