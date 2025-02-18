@@ -13,45 +13,39 @@ import Orbit from '../apps/orbit/orbitbridge';
 import Raycast from '../apps/raycast/raycast';
 
 // Images
-import aurora from './images/aurora.png'
 import siteIcon from './icons/portfolio.png'
 import orbitIcon from './icons/orbit.png'
 import raycastIcon from './icons/raycast.png'
 import testIcon from './icons/test.png'
 
 
-
-function activeWindowOnClick(e) {
-    
-    console.log("WM Here :3")
-     
-}
-
-
 const WM = () => {
-
+    // Int to store the next zIndex
     const [maxZIndex, setMaxZIndex] = useState(0);
+    // Array of all windows
     const [windows, setWindows] = useState([]);
-    const stateRef = useRef();
-    stateRef.current = windows
+    // Reference to most updated copy of windows (used when calling from child)
+    const windowRef = useRef();
+    windowRef.current = windows
+    // Mobile flag used for some apps
     let mobile = false
+    // Crops window to show desktop icons
     let practicalWidth = window.innerWidth - 200
+    // If the window is too thin then cover the desktop icons by default
     if (window.innerWidth < 1265) {
         practicalWidth = window.innerWidth
     }
-
+    // If aspect ratio is portrait then treat as mobile
     if (window.innerHeight > window.innerWidth) {
         mobile = true
-
     }
         
 
-
-    function parentClickHandler(id) {
-        console.log("AAAAAA")
+    // Brings window with the given id to the top
+    function activeWindowHandler(id) {
         let newValue = maxZIndex + 1;
         setMaxZIndex(newValue);
-    
+        // Apply new zIndex to the item with said id
         let newArray = windows.map((item) =>
           item.id === id ? { ...item, zIndex: newValue } : item
         );
@@ -59,43 +53,30 @@ const WM = () => {
     }
 
     const deleteWindow = (id) => {
-        //const tempID = Object.assign({}, id);
-
-        // let newArray = windows.map((item) =>
-        //   item.id === tempID ? null : item
-        // );
-
-
-        //const newArray = [...stateRef.current]
-
-
+        // Temp Array to store windows
         let newArray = []
-        console.log(stateRef.current.length)
 
-        for (let i = 0; i < stateRef.current.length; i++) {
-            console.log("testing " + i)
-
-            if (stateRef.current[i].id !== id) {
-                console.log("did not delete " + i)
-                
-                newArray.push(stateRef.current[i])
+        //windowRef stores the most current reference, where if we called windows directly it would use an outdated reference
+        for (let i = 0; i < windowRef.current.length; i++) {
+            if (windowRef.current[i].id !== id) {
+                // IDs not equal, so dont change it
+                newArray.push(windowRef.current[i])
             } else {
-                console.log("deleted " + i)
+                // Element with ID found, so delete (or well more blank it)
                 newArray.push({...null, zIndex: 0})
             }
-
         }
         setWindows(newArray)
-        // setCounter((prevState) => {
-        //     return (prevState + 1)
-        // })
-        //console.log("deleted window " + id)
     }
 
     const makeWindow = (x,y,height,width,name,content) => {
+        // Give window a zIndex
         let newValue = maxZIndex + 1;
         setMaxZIndex(newValue);
+        // Give window an ID
         let newID = windows.length
+
+        // Make window object
         let tempWin = <Window init={{
             x: x,
             y: y,
@@ -107,49 +88,38 @@ const WM = () => {
             mobile: mobile
           }}
            closeFunction={deleteWindow}
-          />
-    
-          let newArray = []
-
-          windows.forEach((item, index) => {
+        />
+        
+        // Make copy of windows
+        let newArray = []
+        windows.forEach((item, index) => {
             newArray.push(item)
-          })
-          newArray.push({
+        })
+
+        // Add new window to top
+        newArray.push({
             window: tempWin,
             id: windows.length,
             zIndex: newValue,
             baseX: x,
             baseY: y
-          })
+        })
 
-          setWindows(newArray);
-          console.log(windows)
+        setWindows(newArray);
     }
 
 
 
-
+    // Blank Array useEffect means this code only runs at startup
     useEffect(() => {
+        // Spawn Portfolio window
         makeWindow(20, 20, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", <PortfolioMain init = {{
             height: window.innerHeight - 60,
             width: practicalWidth - 40
         }}/>)
-        console.log(windows)
       }, [])
-
-
-
-    const desktopStyle = {
-        //top: "200px",
-        //backgroundImage: `url(${aurora})`,
-        //backgroundPosition: "center center",
-        //height: "100vh",
-        //width: "100vw",
-        //objectFit: "cover",
-        //overflow: "hidden"
-        //position: "absolute"
-    }
-
+    
+    // Desktop Icon Tect
     const iconTextStyle = {backgroundColor: "rgb(204, 204, 204)", 
         fontSize: "14pt", 
         paddingLeft: "4px", 
@@ -157,13 +127,15 @@ const WM = () => {
         textAlign: "center"
     }
 
+    // Define the desktop icons, and the initial parameters of the apps they run
     const desktopIcons = <div className="justify-content-center" style={{float: "right", marginRight: "200px"}}>
         <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", 
             <PortfolioMain init = {{
                 height: window.innerHeight - 60,
                 width: practicalWidth - 40
             }}
-        />)} } style={{position: "absolute", top: "20px", right: "20px", border: "none", background: "none"}} >
+        />)}}
+        style={{position: "absolute", top: "20px", right: "20px", border: "none", background: "none"}} >
             <img src={siteIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Emma's Website</h4>
         </button>
@@ -188,7 +160,7 @@ const WM = () => {
             <img src={raycastIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Raycast</h4>
         </button>
-
+        
         <button onClick={() =>{makeWindow(40, 40, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "320px", right: "36px", border: "none", background: "none"}} >
             <img src={testIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Test Window</h4>
@@ -196,25 +168,19 @@ const WM = () => {
     </div>
 
 
-
-    return <div style={{desktopStyle}}>
-
-        
+    // Final HTML Code
+    return <div >
         <div style= {{}}>
             {windows.map((item) => (
-                <Draggable onMouseDown={() => {parentClickHandler(item.id)}} handle="strong" >
-                <div style={{zIndex: item.zIndex, position: "absolute"}} zIndex={item.zIndex} onMouseDown={() => {parentClickHandler(item.id)}}>
+                <Draggable onMouseDown={() => {activeWindowHandler(item.id)}} handle="strong" >
+                <div style={{zIndex: item.zIndex, position: "absolute"}} zIndex={item.zIndex} onMouseDown={() => {activeWindowHandler(item.id)}}>
                     {item.window}
                 </div>
                 </Draggable>
             ))}
         </div>
         {desktopIcons}
-        
     </div>
-    
-    
-
 }
 
 export default WM;

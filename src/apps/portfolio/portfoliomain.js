@@ -8,19 +8,19 @@ import './portfolio.css'
 
 const PortfolioMain = ({init}) => {
 
+    // Window height and width
     let height = init.height
     let width = init.width
 
+    // How many ems should text be
     let em = width/1000 
     if (height/800 < em) {
         em = height/800
     }
 
+    // Desktop PAdding
     let defaultPadding = "2vh"
 
-
-
-    
     let mobile = false
     if (height > width && width < 700   ) {
         mobile = true
@@ -28,18 +28,17 @@ const PortfolioMain = ({init}) => {
         defaultPadding = "6vh"
     }
 
+    // Get size dependent font sizes
     let imgHeight = height/1.5 + "px"
     let headerSize = 2*em + "em"
     let h1Size = 4*em + "em"
     let h2Size = 3*em + "em"
     let heropSize = 1.5*em + "em"
 
-    
-
-    console.log(headerSize)
-
+    // Store page elements as state
     const [currentPage, setCurrentPage] = useState(<div></div>);
-
+    
+    // Router who??? (This website is 3 pages it will do fine)
     const changePage = (to) => {
         switch(to) {
             case 'Home':
@@ -55,7 +54,7 @@ const PortfolioMain = ({init}) => {
 
     }
 
-    
+    // Header HTML
     let header = <div className = "h-25 d-flex justify-content-center " style={{color: "white", fontFamily: "Charcoal",}}>
         <div className = "col-sm-3 d-flex justify-content-center"> 
             <h1 style={{fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", padding: "4vh"}}> Emma Power </h1>
@@ -72,6 +71,7 @@ const PortfolioMain = ({init}) => {
         </div>
     </div>
 
+    // Special Formatting if mobile
     if (mobile) {
         header = <div className = "h-25 d-flex justify-content-center " style={{color: "white", fontFamily: "Charcoal",}}>
             <div className = "d-flex justify-content-center"> 
@@ -90,22 +90,22 @@ const PortfolioMain = ({init}) => {
         </div>
     }
 
+    // Home page HTML
     const home = () => {
         let emmaPhoto = ""
         let emmaPhotoMobile = ""
         let emmaHeight = "100%"
+        // If on desktop the photo should be inline with the hero text
         if (! mobile) {
-
-        
             emmaPhoto = <div className = "col-sm-6 d-flex justify-content-center align-items-center" >
             <img className="gradImgBorder" src={emma} style={{height: imgHeight, imageRendering: "auto"}}/>
         </div>
         emmaPhotoMobile = <div>
-        <div className = "h-100 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", paddingTop: "5vh"}}>
-
+            <div className = "h-100 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", paddingTop: "5vh"}}>
                 <img src={null} style={{imageRendering: "auto"}}/>
             </div>
         </div>
+        // If on Mobile the photo should be under the button
         } else {
             emmaHeight = "130%"
             emmaPhotoMobile = <div>
@@ -114,9 +114,9 @@ const PortfolioMain = ({init}) => {
                 <img className="gradImgBorder" src={emma} style={{height: imgHeight, imageRendering: "auto"}}/>
                 </div>
             </div>
-
         }
 
+        // HTML and Bootstrap Hell
         return (
             <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", backgroundColor: "#000", position: "flex", imageRendering: "pixelated", backgroundSize: "cover"}}> 
     
@@ -169,7 +169,9 @@ const PortfolioMain = ({init}) => {
         )
     }
     
+    // Projects page
     const proj = () => {
+        // HTML and Bootstrap Hell
         return <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", backgroundColor: "#000", position: "flex", imageRendering: "pixelated", width:"100%"}}> 
     
         {header}
@@ -240,7 +242,9 @@ const PortfolioMain = ({init}) => {
     </div>
     }
 
+    // Photos Page (Not implemented)
     const photos = () => {
+        // (Soon to be) HTML and Bootstrap Hell
         return <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", position: "flex", imageRendering: "pixelated", height: "100%", width:"100%"}}> 
         
             {header}
@@ -279,18 +283,17 @@ const PortfolioMain = ({init}) => {
         </div>
     }
     
+    // Set initial page to home
     useEffect(() => {
         setCurrentPage(home())
     }, [])
-    
 
-    
+    // Only show the current page
     return(
         <div style={{width:"100%"}}>
             {currentPage}
         </div>
     )
-
 }
 
 export default PortfolioMain;

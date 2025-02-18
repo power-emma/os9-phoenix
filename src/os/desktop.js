@@ -4,9 +4,8 @@ import aurora from './images/aurora.png'
 
 class Desktop extends React.Component {
 
-    
+    // Just makes the background image cover the whole screen and crop in
     render() {
-
         const desktopStyle = {
             top: "0px",
             backgroundPosition: "center center",

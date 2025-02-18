@@ -37,28 +37,24 @@ const Orbit = ({init}) => {
   let camX = 0;
   let camY = 0;
 
-  // Where to paint on screen as to be centered
+  // Where to paint on screen as to be centered with reference
   let adjX = 0;
   let adjY = 0;
 
   // Array of all bodies in the system
   let bodies = [];
 
-  // FPS
-  let framerate = 60;
-
   // The simulation will run at this many times faster
   let timeMultiplier = 10000;
 
 
-  // Amount to zoom out
+  // Amount to zoom out (meters)
   let zoom = 2000000000;
 
-  // Amount to adjust by
+  // Amount to adjust screen draw by
   let zoomMultiplier = 1/zoom;
 
-  let simulate = true;
-
+  // Last position for background drawing
   let lastCamX = camX;
   let lastCamY = camY;
 
@@ -69,7 +65,6 @@ const Orbit = ({init}) => {
       - Applies this velocity to speedX and speedY of b1
   */
   const orbit = (b1, b2) => {
-    //console.log(b1)
     // https://en.wikipedia.org/wiki/Orbit_modeling Newton Approach
     let f = (g * b1.mass * b2.mass) / (distanceBetweenBodies(b1,b2)**2);
     // Vectors :(
@@ -114,10 +109,11 @@ const Orbit = ({init}) => {
     // Apply gravitational difference to the speed of the body
     b1.speedX += vx1;
     b1.speedY += vy1;
-    //console.log(b1.speedX + " " + b1.speedY)
   }
 
+  // Makes a body (planetary object) and returns it
   const makeBody = (id, radius, posX, posY, speedX, speedY, mass, colour) => {
+    // Defines body parameters
     const body = {
       id: id,
       radius: radius,
@@ -136,6 +132,7 @@ const Orbit = ({init}) => {
     };
   }
 
+  // Apply orbit calculation to every possible pair of bodies
   const updateBodies = () => {
     // Calculate the gravitational force vector for each combination of bodies
     for (let i = 0; i < bodies.length; i++) {
@@ -151,10 +148,10 @@ const Orbit = ({init}) => {
         let temp = bodies[i];
         temp.posX += (temp.speedX * timeMultiplier);
         temp.posY += (temp.speedY * timeMultiplier);
-        //console.log(temp.speedX + " " + temp.speedY)
     }
   }
 
+  // Initial Solar System model
   bodies.push(makeBody("Sun", 6, 1, 100000, 0, 0, sciNotation(1.989,30), "#ffc400").body);
   bodies.push(makeBody("Mercury", 3, 58000000000, 0, 0, 47400, sciNotation(3.285,23), "#a1a1a1").body);
   bodies.push(makeBody("Venus", 4, 108030000000, 0, 0, 35000, sciNotation(4.867,24), "#d68006").body);
@@ -165,10 +162,11 @@ const Orbit = ({init}) => {
   bodies.push(makeBody("Uranus", 4, 2867000000000, 0, 0, 6800, sciNotation(86.8,24), "#b3f0fc").body);
   bodies.push(makeBody("Neptune", 4, 4515000000000, 0, 0, 5400, sciNotation(102,24), "#5094fa").body);
 
+  // Camera will center on the first body
   let referenceBody = bodies[0];
 
 
-  const screenDraw = (ctx, bctx, frameCount) => {
+  const screenDraw = (ctx, bctx) => {
     //Update camera based on reference point
     camX = referenceBody.posX;
     camY = referenceBody.posY;
@@ -217,6 +215,7 @@ const Orbit = ({init}) => {
     lastCamY = camY;
   }
 
+  // Reset Button
   const clearScreen = () => {
     bodies = []
   }
@@ -225,56 +224,65 @@ const Orbit = ({init}) => {
     // ref knows where the div is on page
     const divRect = orbitRef.current.getBoundingClientRect();
     // Get the mouse click position
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
+    let mouseX = e.clientX;
+    let mouseY = e.clientY;
 
     // Calculate the relative position inside the div
-    const divX = mouseX - divRect.left;
-    const divY = mouseY - divRect.top;
+    let divX = mouseX - divRect.left;
+    let divY = mouseY - divRect.top;
     
+    // if array is cleared then set camera to origin
     if(bodies.length == 0) {
       camX = 0
       camY = 0
     }
 
-    //let worldX = ((temp.posX - camX) * zoomMultiplier) + adjX
-    //let worldY = ((temp.posY - camY) * zoomMultiplier) + adjY
-
+    // Solve Screen Draw Routine for worldX instead of screenX
     let worldX = ((divX - adjX )/zoomMultiplier) + camX
     let worldY = ((divY - adjY )/zoomMultiplier) + camY
 
-    let tempColour = Math.floor(Math.random() * 16777216).toString(16);
-    console.log(tempColour)
-
+    // Generates random hex code for colour
+    const tempColour = Math.floor(Math.random() * 16777216).toString(16);
+    
+    // Make and add the body
     bodies.push(makeBody("X", 3, worldX, worldY, 0, 0, sciNotation(3.285,30), "#" + tempColour).body);
   }
 
+  // Blank Array useEffect means this code only runs at startup
   useEffect(() => {
+    // Acquire canvases
     const canvas = canvasRef.current
     const backgroundCanvas = backgroundCanvasRef.current
     const context = canvas.getContext('2d')
     const backgroundContext = backgroundCanvas.getContext('2d')
 
-    
-
+    // Set Center of canvas
     adjX = context.canvas.width/2
     adjY = context.canvas.height/2
-    let frameCount = 0
-    let animationFrameId
+
+    // Define frameID for use with constant render
+    let animationFrameId;
+
+    // Make background White
     backgroundContext.fillStyle = '#FFFFFF'
     backgroundContext.fillRect(0,0, context.canvas.width, context.canvas.height);
 
+    // Main loop
     const render = () => {
-      frameCount++
+      // Do Physics
       updateBodies()
-      screenDraw(context, backgroundContext, frameCount)
+      // Draw to screen
+      screenDraw(context, backgroundContext)
+      // Call this function again when ready for next frame
       animationFrameId = window.requestAnimationFrame(render)
     }
 
+    // Initial call to main loop
     render()
 
   }, [])
 
+  // Dense HTML
   return (<div style={{width: "100%", height: "100%", position: "relative"}}>
       <div ref={orbitRef} style={{width: "100%", height: "90%", position: "relative" }} onClick={spawnPlanet}>
         <canvas ref={backgroundCanvasRef} width={width} height={(height* 0.9)} style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>

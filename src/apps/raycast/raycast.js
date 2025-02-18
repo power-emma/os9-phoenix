@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom/client';
 
 
 const Raycast = ({init}) => {   
+    // Canvas References
     const canvasRef = useRef(null)
     const backgfloorCanvasRef = useRef(null)
 
@@ -52,6 +53,7 @@ const Raycast = ({init}) => {
     // Stores Screen Draw Data
     let rays = []
 
+    // Control Handlers (TODO: Mobile Controls)
     const keyDownHandler = (event) => {
         if (event.code === "ArrowRight" || event.key === "d") {
             rightPressed = 1;
@@ -78,6 +80,7 @@ const Raycast = ({init}) => {
         }
     }
 
+    // Function emulates casting to int (thanks js)
     const intCast = (num) => {
         if (num > 0) {
             return Math.floor(num)
@@ -85,12 +88,12 @@ const Raycast = ({init}) => {
         return Math.ceil(num)
     }
 
+    // Apply movement and rotation based on control input every frame
     const controls = () => {
         let rotSpeed = 0.03;
 		let moveSpeed = 0.04;
 
 		if (leftPressed) {
-
 			let oldDirX = dirX;
 			dirX = dirX * Math.cos(rotSpeed) - dirY * Math.sin(rotSpeed);
 			dirY = oldDirX * Math.sin(rotSpeed) + dirY * Math.cos(rotSpeed);
@@ -128,6 +131,7 @@ const Raycast = ({init}) => {
 
     }
 
+    // Does the actual raycasting
     const cast = () => {
         // Store the Rays
         let tempRays = []
@@ -228,93 +232,106 @@ const Raycast = ({init}) => {
         rays = tempRays
     }
 
+    // Draws the results of raycast to screen
     const screenDraw = (ctx, bctx, frameCount) => {
         // Screen Blank
         ctx.clearRect(0,0, ctx.canvas.width, ctx.canvas.height);
         // Draw Lines
         for (let i = 0; i < rays.length; i++) {
             ctx.beginPath();
-
+            // Initalize colour values
             let red = 0
             let green = 0
             let blue = 0
+            // Get colour values based on number
             switch (rays[i].type) {
                 case 1:
+                    // Red
                     red = 255
                     break;
                 case 2:
+                    // Orange
                     red = 255
                     green = 128
                     break;
                 case 3:
+                    // Yellow
                     red = 255
                     green = 255
                     break;
                 case 4:
+                    // Green
                     green = 255
                     break;
                 case 5:
+                    // Blue
                     blue = 255
                     break;
                 case 6:
+                    // Purple
                     red = 187
                     blue = 255
                     break;
-
             }
 
             // Shadow effect makes corners more visible
             if (rays[i].side == 1) {
+                // Darken each colour channel by ~ 30%
                 red = red * 0.7
                 green = green * 0.7
                 blue = blue * 0.7
             }
+
+            // Set colour
             ctx.strokeStyle = `rgb(${red}, ${green}, ${blue})`;
-            
-            
-
-
             // Top of line (calculated by raycast)
             ctx.moveTo(i, rays[i].start);
             // Bottom of line (calculated by raycast)
             ctx.lineTo(i, rays[i].end);
+            // Draw!
             ctx.stroke()
         }
 
     }
 
+    // Blank Array useEffect means this code only runs at startup
     useEffect(() => {
+        // Find canvases
         const canvas = canvasRef.current
         const backgfloorCanvas = backgfloorCanvasRef.current
         const context = canvas.getContext('2d')
         const backgfloorContext = backgfloorCanvas.getContext('2d')
 
-
+        // Add control listeners (TODO: Only control when window is active)
         document.addEventListener("keydown", keyDownHandler, false);
         document.addEventListener("keyup", keyUpHandler, false);
 
-        let frameCount = 0
+        // Define frameID for use with constant render
         let animationFrameId
+
+        // Make background White
         backgfloorContext.fillStyle = '#FFFFFF'
         backgfloorContext.fillRect(0,0, context.canvas.width, context.canvas.height);
 
+        // Main Loop
         const render = () => {
-            frameCount++
-            
-            //console.log("START")
+            // Apply controls
             controls()
+            // Perform Raycast operations
             cast()
+            // Draw Screen
             screenDraw(context)
-            //console.log("FRAME")
+            // Call this function again when ready for next frame
             animationFrameId = window.requestAnimationFrame(render)
         }
 
+        // Start main loop
         render()
 
     }, [])
     
 
-    
+    // Simple HTML
     return(
         <div style={{width: "100%", height: "100%", position: "relative"}}>
             <canvas ref={backgfloorCanvasRef} width={width} height={height} style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>
