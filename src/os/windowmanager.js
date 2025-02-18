@@ -168,10 +168,10 @@ const WM = () => {
             <h4 style={iconTextStyle}>Emma's Website</h4>
         </button>
 
-        <button onClick={() =>{makeWindow(20, 20, window.innerHeight / 1.5, window.innerWidth / 2, "orbit.js", 
+        <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, practicalWidth/ 1.25, "orbit.js", 
             <Orbit init = {{
-                height: window.innerHeight / 1.5,
-                width: window.innerWidth / 2
+                height: window.innerHeight - 60,
+                width: practicalWidth / 1.25
             }}
         />)}} 
         style={{position: "absolute", top: "120px", right: "58px", border: "none", background: "none"}} >

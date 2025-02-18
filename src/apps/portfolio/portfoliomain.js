@@ -22,7 +22,7 @@ const PortfolioMain = ({init}) => {
 
     
     let mobile = false
-    if (height > width) {
+    if (height > width && width < 700   ) {
         mobile = true
         em = height/1200
         defaultPadding = "6vh"
@@ -157,7 +157,7 @@ const PortfolioMain = ({init}) => {
                             <h1 style={{fontSize: h2Size}}>Treat this like a normal desktop!</h1>
                         </div>
                         <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
-                            <p style={{fontSize: heropSize}} >Move and close windows just like you are used to! . The desktop icons will launch apps in their own windows too!</p>
+                            <p style={{fontSize: heropSize}} >Move and close windows just like you are used to! The desktop icons will launch apps in their own windows too!</p>
                         </div>
                         <br/>
                     </div>
