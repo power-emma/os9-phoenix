@@ -230,7 +230,7 @@ const PortfolioMain = ({init}) => {
                     <p style={{fontSize: heropSize}}>A graphical engine which uses distance away from objects on a 2d world, to create a 3d effect. While necessary to achieve a 3d effect on older processors, now serves to create a unique aesthetic</p>
                 </div>
                 <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
-                    <p style={{fontSize: heropSize}}>Coming Soon: Mobile Support and Textures!</p>
+                    <p style={{fontSize: heropSize,  display: "block"}}>Tip: Control with WASD or the Arrow Keys</p>
                 </div>
                 <br/>
             </div>
