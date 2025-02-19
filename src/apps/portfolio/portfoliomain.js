@@ -188,7 +188,7 @@ const PortfolioMain = ({init}) => {
                     <p style={{fontSize: heropSize}}>Combining modern web design paradigms with the aesthetics of an operating system from the 90's, this React based website allows for a unique, window based take to display other web based applications</p>
                 </div>
                 <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
-                    <p style={{fontSize: heropSize}}>Tip: Move the Windows Around!</p>
+                    <p style={{fontSize: heropSize}}>Tip: Move the Windows Around and Click the Desktop Icons!</p>
                 </div>
                 <br/>
             </div>
@@ -209,7 +209,7 @@ const PortfolioMain = ({init}) => {
                     <p style={{fontSize: heropSize}} >Displays an accurate model of any arbitrary amount of celestial bodies. Allows for visualization of Solar Systems as well as other gravitational phenomena</p>
                 </div>
                 <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
-                    <p style={{fontSize: heropSize}}> Coming Soon: Interactive Planet Placement</p>
+                    <p style={{fontSize: heropSize}}> Tip: Orbits are difficult to create, place planets carefully to avoid collisions</p>
                 </div>
                 <br/>
             </div>
@@ -219,6 +219,27 @@ const PortfolioMain = ({init}) => {
         </div>
 
         <div className = "h-75 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", marginTop: "50px"}}>
+            <div className = "col-sm-2 d-flex justify-content-center"> 
+
+            </div>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px"}} >
+                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+                    <h1 style={{fontSize: h2Size}}>Raycast</h1>
+                </div>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                    <p style={{fontSize: heropSize}}>A graphical engine which uses distance away from objects on a 2d world, to create a 3d effect. While necessary to achieve a 3d effect on older processors, now serves to create a unique aesthetic</p>
+                </div>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                    <p style={{fontSize: heropSize}}>Coming Soon: Mobile Support and Textures!</p>
+                </div>
+                <br/>
+            </div>
+            <div className = "col-sm-2 d-flex justify-content-center align-items-center">
+                
+            </div>
+        </div>
+
+        <div className = "h-75 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", marginTop: "50px", paddingBottom: "4vh"}}>
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
@@ -282,7 +303,7 @@ const PortfolioMain = ({init}) => {
             </div>
         </div>
     }
-    
+
     // Set initial page to home
     useEffect(() => {
         setCurrentPage(home())
