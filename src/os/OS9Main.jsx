@@ -1,5 +1,5 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import Window from './window.js';
+import Window from './window';
 import TContent from './testContent';
 import Desktop from './desktop';
 import WM from './windowmanager';
