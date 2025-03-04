@@ -1,7 +1,7 @@
 import {React, useState, useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
 import background from './background.png'
-import emma from "./emma.jpg"
+import emma from "./emma.webp"
 import './portfolio.css'
 
 

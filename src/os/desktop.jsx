@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import aurora from './images/aurora.png'
+import aurora from './images/aurora.webp'
 
 class Desktop extends React.Component {
 
