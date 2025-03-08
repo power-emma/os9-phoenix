@@ -1,4 +1,6 @@
-import {React, useState, useEffect} from 'react';
+import {React, useState, useEffect, useRef} from 'react';
+import { RowsPhotoAlbum } from "react-photo-album";
+import "react-photo-album/rows.css";
 import ReactDOM from 'react-dom/client';
 import background from './background.png'
 import emma from "./emma.webp"
@@ -64,9 +66,9 @@ const PortfolioMain = ({init}) => {
         
         </div>
         <div className = "col-sm-3 d-flex justify-content-center" style={{padding: "4vh", paddingRight: "20vw"}}>
-            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Home")}}>Home</h1>
-            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Projects")}}>   Projects</h1>
-            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Photos")}}>   Photos</h1>
+            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer"}} onClick={() => {changePage("Home")}}>Home</h1>
+            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer"}} onClick={() => {changePage("Projects")}}>   Projects</h1>
+            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer"}} onClick={() => {changePage("Photos")}}>   Photos</h1>
 
         </div>
     </div>
@@ -263,45 +265,157 @@ const PortfolioMain = ({init}) => {
     </div>
     }
 
+    const favPics = [
+        { src: "/src/apps/portfolio/photos/film/f1.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f2.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f3.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f4.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f5.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f6.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f7.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f8.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f9.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f10.jpg", width: 1544, height: 1024 },
+        { src: "/src/apps/portfolio/photos/film/f11.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f12.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f13.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f14.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f15.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f16.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f17.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f18.jpg", width: 1544, height: 1024 },
+        { src: "/src/apps/portfolio/photos/film/f19.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f20.jpg", width: 1024, height: 1544 },
+    ]
+
+    const qtp = [
+        { src: "/src/apps/portfolio/photos/qt/qt1.jpg", width: 480, height: 640 },
+        { src: "/src/apps/portfolio/photos/qt/qt2.jpg", width: 480, height: 640 },
+        { src: "/src/apps/portfolio/photos/qt/qt3.jpg", width: 480, height: 640 },
+        { src: "/src/apps/portfolio/photos/qt/qt4.jpg", width: 640, height: 480 },
+        { src: "/src/apps/portfolio/photos/qt/qt5.jpg", width: 640, height: 480 },
+        { src: "/src/apps/portfolio/photos/qt/qt6.jpg", width: 480, height: 640 },
+    ];
+
+    const mavicaPics = [
+        { src: "/src/apps/portfolio/photos/mavica/m1.jpg", width: 480, height: 640},
+        { src: "/src/apps/portfolio/photos/mavica/m2.jpg", width: 640, height: 480},
+        { src: "/src/apps/portfolio/photos/mavica/m3.jpg", width: 480, height: 640},
+        { src: "/src/apps/portfolio/photos/mavica/m4.jpg", width: 640, height: 480},
+        { src: "/src/apps/portfolio/photos/mavica/m5.jpg", width: 480, height: 640},
+        { src: "/src/apps/portfolio/photos/mavica/m6.jpg", width: 480, height: 640},
+        { src: "/src/apps/portfolio/photos/mavica/m7.jpg", width: 480, height: 640},
+        { src: "/src/apps/portfolio/photos/mavica/m8.jpg", width: 480, height: 640},
+        { src: "/src/apps/portfolio/photos/mavica/m9.jpg", width: 480, height: 640},
+        { src: "/src/apps/portfolio/photos/mavica/m10.jpg", width: 480, height: 640},
+        { src: "/src/apps/portfolio/photos/mavica/m11.jpg", width: 480, height: 640},
+        { src: "/src/apps/portfolio/photos/mavica/m12.jpg", width: 480, height: 640},
+        { src: "/src/apps/portfolio/photos/mavica/m13.jpg", width: 480, height: 640},
+    ]
+
+    const filmPics = [
+        { src: "/src/apps/portfolio/photos/film/f1.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f2.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f3.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f4.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f5.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f6.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f7.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f8.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f9.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f10.jpg", width: 1544, height: 1024 },
+        { src: "/src/apps/portfolio/photos/film/f11.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f12.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f13.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f14.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f15.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f16.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f17.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f18.jpg", width: 1544, height: 1024 },
+        { src: "/src/apps/portfolio/photos/film/f19.jpg", width: 1024, height: 1544 },
+        { src: "/src/apps/portfolio/photos/film/f20.jpg", width: 1024, height: 1544 },
+    ]
+    const spacePics = [
+        { src: "/src/apps/portfolio/photos/space/s1.png", width: 2543, height: 1691 },
+        { src: "/src/apps/portfolio/photos/space/s2.png", width: 4288, height: 2854 },
+        { src: "/src/apps/portfolio/photos/space/s3.png", width: 2743, height: 1824 },
+        { src: "/src/apps/portfolio/photos/space/s4.png", width: 2854, height: 4288 },
+        { src: "/src/apps/portfolio/photos/space/s5.png", width: 856, height: 1277 },
+        { src: "/src/apps/portfolio/photos/space/s6.png", width: 1926, height: 1287 },
+        { src: "/src/apps/portfolio/photos/space/s7.png", width: 8596, height: 5708 },
+        { src: "/src/apps/portfolio/photos/space/s8.png", width: 2970, height: 3290 },
+        { src: "/src/apps/portfolio/photos/space/s9.jpg", width: 958, height: 1277 },
+
+    ];
+    const [activePics, setActivePics] = useState([<div classname = 'q'><RowsPhotoAlbum
+        photos={favPics}
+        // Scales well to vertical and horizontal
+        targetRowHeight={30 + (width/Math.log10(width))}
+        withLightbox={true}
+    /></div>]);
+
+    const [photosHero, setPhotosHero] = useState({
+        name: "Emma's Film Photos",
+        description: "Somehow, humanity managed to gain the power to create an exact likeness of any scene in an instant, before we figured out how to make a cardboard box"
+    });
+
+    useEffect(() => {
+        // Refresh photos page
+        setCurrentPage(photos())
+     }, [activePics])
+
     // Photos Page (Not implemented)
     const photos = () => {
+
+        const changePics = (arr,name,desc) => {
+            let newA = [<div classname = 'q'><RowsPhotoAlbum
+                photos={arr}
+                // Scales well to vertical and horizontal
+                targetRowHeight={30 + (width/Math.log10(width))}
+                withLightbox={true}
+            /></div>]
+            setPhotosHero( {
+                name: name,
+                description: desc
+            })
+            setActivePics(newA)
+
+            console.log("clack")
+            console.log(activePics)
+        }
+
         // (Soon to be) HTML and Bootstrap Hell
-        return <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", position: "flex", imageRendering: "pixelated", height: "100%", width:"100%"}}> 
+        return <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", backgroundColor: "#000", position: "flex", imageRendering: "pixelated", width:"100%"}}> 
         
             {header}
+            <div className='px-3 d-flex justify-content-center' style={{flexWrap: "wrap"}}>
 
-            <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>
+                    <button className="mx-3 my-1 gradbutton" onClick={() => changePics(qtp, "Quicktake", "Released at a time where their logo had a rainbow yet their laptops remained in black and white, Apple's first digital camera remains a competitive choice for capturing UFO sightings")}>Quicktake</button>
+                    <button className="mx-3 my-1 gradbutton" onClick={() => changePics(mavicaPics, "Sony Mavica", "The photographic power of a bank security camera, and the computing power of a floppy disk drive, all in one place")}>Mavica</button>
+                    <button className="mx-3 my-1 gradbutton" onClick={() => changePics(filmPics, "Emma's Film Photos", "Somehow, humanity managed to gain the power to create an exact likeness of any scene in an instant, before we figured out how to make a cardboard box")}>Film</button>
+                    <button className="mx-3 my-1 gradbutton" onClick={() => changePics(spacePics, "Space", "Stars are like pretty cool I guess")}>Space</button>
+
+            </div>
+            <div className = "d-flex " style={{color: "white", fontFamily: "Charcoal",}}>
                 <div className = "col-sm-2 d-flex justify-content-center"> 
 
                 </div>
-                <div className = "col-sm-4 justify-content-center align-items-center" >
-                    <div className = "h-25 d-flex " style={{color: "white"}}>
-                        <h1 style={{fontSize: h1Size}}>Photos!</h1>
+                <div className = "p-2 col-sm-8 justify-content-center align-items-center" >
+                    <div>
+                        <h1 style={{fontSize: h1Size, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}}>{photosHero.name}</h1>
+                        <p style={{fontSize: heropSize}}>{photosHero.description}</p>
                     </div>
-                    <div className = "h-50 d-flex" style={{color: "white", display: 'inline'}}>
+                    <div style={{imageRendering: "auto"}}>
+                        {activePics}
+                    </div>
 
-                    </div>
-                    <div className = "h-25 d-flex " style={{color: "white"}}>
-                        <p style={{fontSize: heropSize}}>Still a WIP</p>
-                    </div>
-                    <br/>
                 </div>
-                <div className = "col-sm-6 d-flex justify-content-center align-items-center">
+                <div className = "col-sm-2 d-flex justify-content-center align-items-center">
                     
-                </div>
-            </div>
-            <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>
-                <div className = "col-sm-3 d-flex justify-content-center"> 
-
-                </div>
-                <div className = "col-sm-6 justify-content-center align-items-center" >
-                    
-                </div>
-                <div className = "col-sm-3 d-flex justify-content-center align-items-center">
-
                 </div>
             </div>
         </div>
+        
     }
 
     // Set initial page to home
