@@ -266,85 +266,85 @@ const PortfolioMain = ({init}) => {
     }
 
     const favPics = [
-        { src: "/src/apps/portfolio/photos/film/f1.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f2.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f3.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f4.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f5.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f6.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f7.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f8.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f9.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f10.jpg", width: 1544, height: 1024 },
-        { src: "/src/apps/portfolio/photos/film/f11.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f12.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f13.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f14.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f15.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f16.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f17.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f18.jpg", width: 1544, height: 1024 },
-        { src: "/src/apps/portfolio/photos/film/f19.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f20.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f1.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f2.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f3.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f4.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f5.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f6.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f7.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f8.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f9.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f10.jpg", width: 1544, height: 1024 },
+        { src: "./photos/film/f11.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f12.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f13.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f14.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f15.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f16.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f17.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f18.jpg", width: 1544, height: 1024 },
+        { src: "./photos/film/f19.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f20.jpg", width: 1024, height: 1544 },
     ]
 
     const qtp = [
-        { src: "/src/apps/portfolio/photos/qt/qt1.jpg", width: 480, height: 640 },
-        { src: "/src/apps/portfolio/photos/qt/qt2.jpg", width: 480, height: 640 },
-        { src: "/src/apps/portfolio/photos/qt/qt3.jpg", width: 480, height: 640 },
-        { src: "/src/apps/portfolio/photos/qt/qt4.jpg", width: 640, height: 480 },
-        { src: "/src/apps/portfolio/photos/qt/qt5.jpg", width: 640, height: 480 },
-        { src: "/src/apps/portfolio/photos/qt/qt6.jpg", width: 480, height: 640 },
+        { src: "./photos/qt/qt1.jpg", width: 480, height: 640 },
+        { src: "./photos/qt/qt2.jpg", width: 480, height: 640 },
+        { src: "./photos/qt/qt3.jpg", width: 480, height: 640 },
+        { src: "./photos/qt/qt4.jpg", width: 640, height: 480 },
+        { src: "./photos/qt/qt5.jpg", width: 640, height: 480 },
+        { src: "./photos/qt/qt6.jpg", width: 480, height: 640 },
     ];
 
     const mavicaPics = [
-        { src: "/src/apps/portfolio/photos/mavica/m1.jpg", width: 480, height: 640},
-        { src: "/src/apps/portfolio/photos/mavica/m2.jpg", width: 640, height: 480},
-        { src: "/src/apps/portfolio/photos/mavica/m3.jpg", width: 480, height: 640},
-        { src: "/src/apps/portfolio/photos/mavica/m4.jpg", width: 640, height: 480},
-        { src: "/src/apps/portfolio/photos/mavica/m5.jpg", width: 480, height: 640},
-        { src: "/src/apps/portfolio/photos/mavica/m6.jpg", width: 480, height: 640},
-        { src: "/src/apps/portfolio/photos/mavica/m7.jpg", width: 480, height: 640},
-        { src: "/src/apps/portfolio/photos/mavica/m8.jpg", width: 480, height: 640},
-        { src: "/src/apps/portfolio/photos/mavica/m9.jpg", width: 480, height: 640},
-        { src: "/src/apps/portfolio/photos/mavica/m10.jpg", width: 480, height: 640},
-        { src: "/src/apps/portfolio/photos/mavica/m11.jpg", width: 480, height: 640},
-        { src: "/src/apps/portfolio/photos/mavica/m12.jpg", width: 480, height: 640},
-        { src: "/src/apps/portfolio/photos/mavica/m13.jpg", width: 480, height: 640},
+        { src: "./photos/mavica/m1.jpg", width: 480, height: 640},
+        { src: "./photos/mavica/m2.jpg", width: 640, height: 480},
+        { src: "./photos/mavica/m3.jpg", width: 480, height: 640},
+        { src: "./photos/mavica/m4.jpg", width: 640, height: 480},
+        { src: "./photos/mavica/m5.jpg", width: 480, height: 640},
+        { src: "./photos/mavica/m6.jpg", width: 480, height: 640},
+        { src: "./photos/mavica/m7.jpg", width: 480, height: 640},
+        { src: "./photos/mavica/m8.jpg", width: 480, height: 640},
+        { src: "./photos/mavica/m9.jpg", width: 480, height: 640},
+        { src: "./photos/mavica/m10.jpg", width: 480, height: 640},
+        { src: "./photos/mavica/m11.jpg", width: 480, height: 640},
+        { src: "./photos/mavica/m12.jpg", width: 480, height: 640},
+        { src: "./photos/mavica/m13.jpg", width: 480, height: 640},
     ]
 
     const filmPics = [
-        { src: "/src/apps/portfolio/photos/film/f1.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f2.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f3.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f4.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f5.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f6.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f7.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f8.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f9.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f10.jpg", width: 1544, height: 1024 },
-        { src: "/src/apps/portfolio/photos/film/f11.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f12.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f13.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f14.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f15.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f16.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f17.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f18.jpg", width: 1544, height: 1024 },
-        { src: "/src/apps/portfolio/photos/film/f19.jpg", width: 1024, height: 1544 },
-        { src: "/src/apps/portfolio/photos/film/f20.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f1.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f2.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f3.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f4.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f5.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f6.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f7.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f8.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f9.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f10.jpg", width: 1544, height: 1024 },
+        { src: "./photos/film/f11.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f12.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f13.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f14.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f15.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f16.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f17.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f18.jpg", width: 1544, height: 1024 },
+        { src: "./photos/film/f19.jpg", width: 1024, height: 1544 },
+        { src: "./photos/film/f20.jpg", width: 1024, height: 1544 },
     ]
     const spacePics = [
-        { src: "/src/apps/portfolio/photos/space/s1.png", width: 2543, height: 1691 },
-        { src: "/src/apps/portfolio/photos/space/s2.png", width: 4288, height: 2854 },
-        { src: "/src/apps/portfolio/photos/space/s3.png", width: 2743, height: 1824 },
-        { src: "/src/apps/portfolio/photos/space/s4.png", width: 2854, height: 4288 },
-        { src: "/src/apps/portfolio/photos/space/s5.png", width: 856, height: 1277 },
-        { src: "/src/apps/portfolio/photos/space/s6.png", width: 1926, height: 1287 },
-        { src: "/src/apps/portfolio/photos/space/s7.png", width: 8596, height: 5708 },
-        { src: "/src/apps/portfolio/photos/space/s8.png", width: 2970, height: 3290 },
-        { src: "/src/apps/portfolio/photos/space/s9.jpg", width: 958, height: 1277 },
+        { src: "../photos/space/s1.png", width: 2543, height: 1691 },
+        { src: "../photos/space/s2.png", width: 4288, height: 2854 },
+        { src: "../photos/space/s3.png", width: 2743, height: 1824 },
+        { src: "../photos/space/s4.png", width: 2854, height: 4288 },
+        { src: "../photos/space/s5.png", width: 856, height: 1277 },
+        { src: "../photos/space/s6.png", width: 1926, height: 1287 },
+        { src: "../photos/space/s7.png", width: 8596, height: 5708 },
+        { src: "../photos/space/s8.png", width: 2970, height: 3290 },
+        { src: "../photos/space/s9.jpg", width: 958, height: 1277 },
 
     ];
     const [activePics, setActivePics] = useState([<div classname = 'q'><RowsPhotoAlbum
@@ -390,10 +390,10 @@ const PortfolioMain = ({init}) => {
             {header}
             <div className='px-3 d-flex justify-content-center' style={{flexWrap: "wrap"}}>
 
-                    <button className="mx-3 my-1 gradbutton" onClick={() => changePics(qtp, "Quicktake", "Released at a time where their logo had a rainbow yet their laptops remained in black and white, Apple's first digital camera remains a competitive choice for capturing UFO sightings")}>Quicktake</button>
-                    <button className="mx-3 my-1 gradbutton" onClick={() => changePics(mavicaPics, "Sony Mavica", "The photographic power of a bank security camera, and the computing power of a floppy disk drive, all in one place")}>Mavica</button>
-                    <button className="mx-3 my-1 gradbutton" onClick={() => changePics(filmPics, "Emma's Film Photos", "Somehow, humanity managed to gain the power to create an exact likeness of any scene in an instant, before we figured out how to make a cardboard box")}>Film</button>
-                    <button className="mx-3 my-1 gradbutton" onClick={() => changePics(spacePics, "Space", "Stars are like pretty cool I guess")}>Space</button>
+                    <button className="mx-2 my-1 gradbutton" style={{padding: ((width/100) + "px "+ (width/33) + "px"), fontSize: heropSize}} onClick={() => changePics(qtp, "Quicktake", "Released at a time where their logo had a rainbow yet their laptops remained in black and white, Apple's first digital camera remains a competitive choice for capturing UFO sightings")}>Quicktake</button>
+                    <button className="mx-2 my-1 gradbutton" style={{padding: ((width/100) + "px "+ (width/33) + "px"), fontSize: heropSize}}  onClick={() => changePics(mavicaPics, "Sony Mavica", "The photographic power of a bank security camera, and the computing power of a floppy disk drive, all in one place")}>Mavica</button>
+                    <button className="mx-2 my-1 gradbutton" style={{padding: ((width/100) + "px "+ (width/33) + "px"), fontSize: heropSize}}  onClick={() => changePics(filmPics, "Emma's Film Photos", "Somehow, humanity managed to gain the power to create an exact likeness of any scene in an instant, before we figured out how to make a cardboard box")}>Film</button>
+                    <button className="mx-2 my-1 gradbutton" style={{padding: ((width/100) + "px "+ (width/33) + "px"), fontSize: heropSize}}  onClick={() => changePics(spacePics, "Space", "Stars are like pretty cool I guess")}>Space</button>
 
             </div>
             <div className = "d-flex " style={{color: "white", fontFamily: "Charcoal",}}>
