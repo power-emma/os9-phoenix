@@ -17,3 +17,70 @@ code {
   src: local('Charcoal'), url(./fonts/charcoal.ttf) format('truetype');
 
 }
+.menubar__right-header {
+  position: absolute;
+  right: 65px;
+  top: 2px;
+  background: transparent;
+  border: none !important;
+  font-family: Charcoal;
+  font-display: swap;
+  font-size: 13px;
+}
+
+.menubar__time {
+  position: absolute;
+  display: inline;
+  right: 100px;
+  top: 2px;
+  background: transparent;
+  border: none !important;
+  font-family: Charcoal;
+  font-display: swap;
+  font-size: 13px;
+}
+
+.menubar__apple-button {
+  position: absolute;
+  top: 2px;
+  display: inline;
+  margin-left: 8px;
+  margin-right: 10px;
+}
+
+.menubar__action-button-div {
+  display: inline;
+  font-size: 12px;
+  -webkit-font-smoothing: auto;
+  background: transparent;
+  border: none !important;
+}
+
+.menubar__button--no-text {
+  position: absolute;
+  top: 1px;
+  background: transparent;
+  border: none !important;
+  font-family: Charcoal;
+  font-display: swap;
+  font-size: 13px;
+}
+
+.menubar {
+  display: inline;
+  height: 20px;
+  background-color: rgb(221, 221, 221);
+  display: block;
+}
+
+.menubar__left-corner {
+  display: inline;
+}
+
+.menubar__right-corner {
+  display: inline;
+  position: relative;
+  float: right;
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
+}

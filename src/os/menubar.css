@@ -1,0 +1,70 @@
+.menubar__right-header {
+    position: absolute;
+    right: 132px;
+    top: 1px;
+    background: transparent;
+    border: none !important;
+    font-family: Charcoal;
+    font-display: swap;
+    font-size: 13px;
+  }
+  
+  .menubar__time {
+    position: absolute;
+    display: inline;
+    right: 164px;
+    top: 2px;
+    background: transparent;
+    border: none !important;
+    font-family: Charcoal;
+    font-display: swap;
+    font-size: 13px;
+  }
+  
+  .menubar__apple-button {
+    position: fixed;
+    top: 2px;
+    display: inline;
+    margin-left: 8px;
+    margin-right: 10px;
+  }
+  
+  .menubar__action-button-div {
+    display: inline;
+    
+    font-size: 12px;
+    -webkit-font-smoothing: auto;
+    background: transparent;
+    border: none !important;
+  }
+  
+  .menubar__button--no-text {
+    position:absolute;
+    top: 1px;
+    background: transparent;
+    border: none !important;
+    font-family: Charcoal;
+    font-display: swap;
+    font-size: 13px;
+  }
+  
+  .menubar {
+    display: inline;
+    height: 20px;
+    background-color: rgb(221, 221, 221);
+    position:absolute;
+    display: block;
+  }
+  
+  .menubar__left-corner {
+    display: inline;
+    position: relative;
+    float: left;
+  }
+  
+  .menubar__right-corner {
+    display: inline;
+    position: relative;
+    float: right;
+
+  }

@@ -350,7 +350,7 @@ const PortfolioMain = ({init}) => {
     const [activePics, setActivePics] = useState([<div classname = 'q'><RowsPhotoAlbum
         photos={favPics}
         // Scales well to vertical and horizontal
-        targetRowHeight={30 + (width/Math.log10(width))}
+        targetRowHeight={30 + (width/Math.log(16, width * 1.5))}
         withLightbox={true}
     /></div>]);
 
@@ -371,7 +371,7 @@ const PortfolioMain = ({init}) => {
             let newA = [<div classname = 'q'><RowsPhotoAlbum
                 photos={arr}
                 // Scales well to vertical and horizontal
-                targetRowHeight={30 + (width/Math.log10(width))}
+                targetRowHeight={30 + (width/Math.log(16, width * 1.5))}
                 withLightbox={true}
             /></div>]
             setPhotosHero( {

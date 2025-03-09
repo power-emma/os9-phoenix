@@ -113,7 +113,7 @@ const WM = () => {
     // Blank Array useEffect means this code only runs at startup
     useEffect(() => {
         // Spawn Portfolio window
-        makeWindow(20, 20, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", <PortfolioMain init = {{
+        makeWindow(20, 24, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", <PortfolioMain init = {{
             height: window.innerHeight - 60,
             width: practicalWidth - 40
         }}/>)
@@ -128,40 +128,40 @@ const WM = () => {
     }
 
     // Define the desktop icons, and the initial parameters of the apps they run
-    const desktopIcons = <div className="justify-content-center" style={{float: "right", marginRight: "200px"}}>
-        <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", 
+    const desktopIcons = <div className="justify-content-center" style={{float: "right", marginRight: "200px", marginTop: "16px"}}>
+        <button onClick={() =>{makeWindow(20, 32, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", 
             <PortfolioMain init = {{
                 height: window.innerHeight - 60,
                 width: practicalWidth - 40
             }}
         />)}}
-        style={{position: "absolute", top: "20px", right: "20px", border: "none", background: "none"}} >
+        style={{position: "absolute", top: "32px", right: "20px", border: "none", background: "none"}} >
             <img src={siteIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Emma's Website</h4>
         </button>
 
-        <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, practicalWidth/ 1.25, "orbit.js", 
+        <button onClick={() =>{makeWindow(20, 32, window.innerHeight - 60, practicalWidth/ 1.25, "orbit.js", 
             <Orbit init = {{
                 height: window.innerHeight - 60,
                 width: practicalWidth / 1.25
             }}
         />)}} 
-        style={{position: "absolute", top: "120px", right: "58px", border: "none", background: "none"}} >
+        style={{position: "absolute", top: "132px", right: "58px", border: "none", background: "none"}} >
             <img src={orbitIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Orbit.js</h4>
         </button>
 
-        <button onClick={() =>{makeWindow(20, 20, window.innerHeight - 60, practicalWidth - 40, "Raycast Engine", 
+        <button onClick={() =>{makeWindow(20, 32, window.innerHeight - 60, practicalWidth - 40, "Raycast Engine", 
             <Raycast init = {{
             height: window.innerHeight - 60,
             width: practicalWidth - 40
             }}/>
-        )} } style={{position: "absolute", top: "220px", right: "58px", border: "none", background: "none"}} >
+        )} } style={{position: "absolute", top: "232px", right: "58px", border: "none", background: "none"}} >
             <img src={raycastIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Raycast</h4>
         </button>
         
-        <button onClick={() =>{makeWindow(40, 40, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "320px", right: "36px", border: "none", background: "none"}} >
+        <button onClick={() =>{makeWindow(40, 40, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "332px", right: "36px", border: "none", background: "none"}} >
             <img src={testIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Test Window</h4>
         </button>
