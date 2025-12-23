@@ -11,12 +11,13 @@ import TContent from './testContent';
 import PortfolioMain from '../apps/portfolio/portfoliomain';
 import Orbit from '../apps/orbit/orbitbridge';
 import Raycast from '../apps/raycast/raycast';
+import Plasma from '../apps/plasma/plasma';
 
 // Images
 import siteIcon from './icons/portfolio.png'
 import orbitIcon from './icons/orbit.png'
 import raycastIcon from './icons/raycast.png'
-import testIcon from './icons/test.png'
+import plasmaIcon from './icons/plasma.png'
 
 
 const WM = () => {
@@ -117,6 +118,8 @@ const WM = () => {
             height: window.innerHeight - 60,
             width: practicalWidth - 40
         }}/>)
+
+        
       }, [])
     
     // Desktop Icon Tect
@@ -161,9 +164,13 @@ const WM = () => {
             <h4 style={iconTextStyle}>Raycast</h4>
         </button>
         
-        <button onClick={() =>{makeWindow(40, 40, 100, 400, "Test Window", <TContent />)} } style={{position: "absolute", top: "332px", right: "36px", border: "none", background: "none"}} >
-            <img src={testIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
-            <h4 style={iconTextStyle}>Test Window</h4>
+        <button onClick={() =>{
+        makeWindow(20, 24, window.innerHeight - 60, practicalWidth - 40, "Plasma Demo", <Plasma init = {{
+            height: window.innerHeight - 60,
+            width: practicalWidth - 40
+        }}/>)} } style={{position: "absolute", top: "332px", right: "58px", border: "none", background: "none"}} >
+            <img src={plasmaIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
+            <h4 style={iconTextStyle}>Plasma</h4>
         </button>
     </div>
 
