@@ -1,6 +1,6 @@
 import {React, useEffect, useRef, useState} from 'react';
 
-const GDemo = ({init}) => {
+const Plasma = ({init}) => {
     const canvasRef = useRef(null);
     const backgfloorCanvasRef = useRef(null);
 
@@ -80,8 +80,8 @@ const GDemo = ({init}) => {
         }
 
         const chosen = [];
-        const minHueDiff = 30; // degrees
-        const minLightDiff = 0.15; // lightness (0..1)
+        const minHueDiff = 15; // degrees
+        const minLightDiff = 0.20; // lightness (0..1)
 
         for (let i = 0; i < 4; i++) {
             let attempt = 0;
@@ -264,5 +264,5 @@ const GDemo = ({init}) => {
     );
 };
 
-export default GDemo;
+export default Plasma;
 
