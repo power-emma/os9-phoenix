@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Close from "./images/close.png"
 
 const Window = ({init, closeFunction }) => {
     // Get init variables
-    let x = init.x;
-    let y = init.y;
-    let height = init.height;
-    let width = init.width;
-    let name = init.name;
-    let content = init.content;
-    let id = init.id
+    const x = init.x;
+    const y = init.y;
+    const name = init.name;
+    const content = init.content;
+    const id = init.id;
+
+    // keep width/height in state so resizing updates layout
+    const [size, setSize] = useState({ width: init.width, height: init.height });
+    const sizeRef = useRef(size);
+    sizeRef.current = size;
+    const draggingRef = useRef(false);
+    const startRef = useRef({ mouseX: 0, mouseY: 0, startW: 0, startH: 0 });
 
     // Spawn titlebar
     let tb = titlebar(name)
@@ -18,10 +23,42 @@ const Window = ({init, closeFunction }) => {
         tb = titlebarMobile(name)
     }
 
-    // Wrapper for the closef unction
-    const deleteFunction = () => {
-        closeFunction(id)
-    }
+    // Wrapper for the close function
+    const deleteFunction = () => closeFunction(id);
+
+    // Resize handlers
+    useEffect(() => {
+        function onMove(e) {
+            if (!draggingRef.current) return;
+            e.preventDefault();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const dx = clientX - startRef.current.mouseX;
+            const dy = clientY - startRef.current.mouseY;
+            const newW = Math.max(120, Math.round(startRef.current.startW + dx));
+            const newH = Math.max(80, Math.round(startRef.current.startH + dy));
+            setSize({ width: newW, height: newH });
+        }
+
+        function onUp() {
+            if (!draggingRef.current) return;
+            draggingRef.current = false;
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onUp);
+        }
+
+        // attach global listeners when dragging starts via handlers below
+        return () => {
+            // cleanup in case
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onUp);
+        };
+    }, []);
 
     // Creates the titlebar
     function titlebar(name) {
@@ -123,17 +160,49 @@ const Window = ({init, closeFunction }) => {
     
     }
 
-    // Overall HTML code
+    // Start/stop dragging from handle
+    const onHandleDown = (e) => {
+        e.preventDefault();
+        draggingRef.current = true;
+        document.body.style.userSelect = 'none';
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        startRef.current = { mouseX: clientX, mouseY: clientY, startW: sizeRef.current.width, startH: sizeRef.current.height };
+        function onMove(e) {
+            if (!draggingRef.current) return;
+            const clientX2 = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY2 = e.touches ? e.touches[0].clientY : e.clientY;
+            const dx = clientX2 - startRef.current.mouseX;
+            const dy = clientY2 - startRef.current.mouseY;
+            const newW = Math.max(120, Math.round(startRef.current.startW + dx));
+            const newH = Math.max(80, Math.round(startRef.current.startH + dy));
+            setSize({ width: newW, height: newH });
+        }
+        function onUp() {
+            draggingRef.current = false;
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onUp);
+    };
+
+    // HTML code
     return <div style = {{
         position: "absolute",
         display: "block",
-        height: height + "px",
-        width: width + "px",
+        height: size.height + "px",
+        width: size.width + "px",
         left: x + "px",
         top: y + "px",
         }} >
 
-        <div style = {{display: "inline-block",  height: "100%", width:"100%"}}>
+        <div style = {{display: "inline-block",  height: "100%", width:"100%", position: 'relative'}}>
             <strong>
                 <div>
                     {tb}
@@ -142,6 +211,25 @@ const Window = ({init, closeFunction }) => {
             <div style = {{display: "flex", height: "100%", width:"100%", overflow: "auto"}}>
                 {content}
             </div>
+
+            {}
+            
+            <div
+                onMouseDown={onHandleDown}
+                onTouchStart={onHandleDown}
+                style={{
+                    position: 'absolute',
+                    width: 14,
+                    height: 14,
+                    right: 0,
+                    bottom: -23,
+                    background: 'linear-gradient(135deg, rgba(0,0,0,0.12), rgba(255,255,255,0.6))',
+                    border: '1px solid rgba(0,0,0,0.2)',
+                    cursor: 'nwse-resize',
+                    zIndex: 1000,
+                    userSelect: 'none'
+                }}
+            />
         </div>
     </div>
         
