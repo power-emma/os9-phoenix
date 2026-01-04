@@ -107,16 +107,27 @@ const Renderer = ({ init }) => {
 
     // Debug toggles (wireframe and normals visualization)
     const [wireframe, setWireframe] = useState(false);
-    const [normalsView, setNormalsView] = useState(false);
+    const [normalsView, setNormalsView] = useState(true);
     const [fps, setFps] = useState(0);
     const framesRef2 = useRef(0);
     const lastFpsTimeRef = useRef(performance.now());
-    const [useWebGL, setUseWebGL] = useState(false);
+
 
     // Reusable buffers
     const zbufRef = useRef(null);
     const imageDataRef = useRef(null);
     const triCacheRef = useRef(null);
+    // Offscreen cache for resolution scaling
+    const offscreenCacheRef = useRef({ w: 0, h: 0, offscreen: null, imageData: null, zbuf: null });
+
+    // Resolution scaler (like Plasma): resolutionExp controls pow(0.5, exp) scale
+    const [resolutionExp, setResolutionExp] = useState(1);
+    const resolutionScale = Math.pow(0.5, resolutionExp);
+
+    // Model selection state
+    const [modelList, setModelList] = useState([]);
+    const [selectedModel, setSelectedModel] = useState(null);
+    const modelsCacheRef = useRef({});
 
     // Cube vertices
     const v = [
@@ -194,7 +205,7 @@ const Renderer = ({ init }) => {
         let mounted = true;
         (async () => {
             try {
-                const res = await fetch('/teapot.obj');
+                const res = await fetch('/objs/miat.obj');
                 if (!res.ok) throw new Error('Not found');
                 const txt = await res.text();
                 const parsed = parseOBJ(txt);
@@ -219,76 +230,109 @@ const Renderer = ({ init }) => {
         return () => { mounted = false; };
     }, []);
 
+  
+    // Fetch available models and cache the selected model
+    useEffect(() => {
+        let mounted = true;
+        fetch('/objs/list.json').then(r => {
+            if (!r.ok) throw new Error('No manifest');
+            return r.json();
+        }).then(list => {
+            if (!mounted) return;
+            if (Array.isArray(list) && list.length) {
+                setModelList(list);
+                // pick previously selected or first
+                setSelectedModel(prev => prev || list[0]);
+            }
+        }).catch(err => {
+            console.warn('Could not load /objs/list.json', err);
+            // fallback to known teapot if present
+            setSelectedModel(prev => prev || 'teapot.obj');
+        });
+        return () => { mounted = false; };
+    }, []);
 
-
-
+    // Load the selected model (once per filename) and cache the parsed triangles
+    useEffect(() => {
+        if (!selectedModel) return;
+        let mounted = true;
+        async function loadModel(name) {
+            try {
+                if (modelsCacheRef.current[name]) {
+                    trianglesRef.current = modelsCacheRef.current[name];
+                    return;
+                }
+                const res = await fetch('/objs/' + name);
+                if (!res.ok) throw new Error('Not found');
+                const txt = await res.text();
+                const parsed = parseOBJ(txt);
+                for (let i = 0; i < parsed.length; i++) parsed[i].color = colors[i % colors.length];
+                modelsCacheRef.current[name] = parsed;
+                if (mounted) {
+                    trianglesRef.current = parsed;
+                    cameraRef.current.z = 3;
+                    console.log('Loaded', name, 'triangles:', parsed.length);
+                }
+            } catch (err) {
+                console.warn('Could not load model', name, err);
+            }
+        }
+        loadModel(selectedModel);
+        return () => { mounted = false; };
+    }, [selectedModel]);
+    // Software rasterizer
     const screenDraw = (ctx, bctx) => {
+        // Render into a scaled offscreen buffer controlled by resolutionScale
+        const mainW = ctx.canvas.width | 0;
+        const mainH = ctx.canvas.height | 0;
+        const scaledW = Math.max(1, Math.floor(mainW * resolutionScale));
+        const scaledH = Math.max(1, Math.floor(mainH * resolutionScale));
 
-        // Clear Screen
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        // ensure offscreen cache
+        let cache = offscreenCacheRef.current;
+        if (!cache.offscreen || cache.w !== scaledW || cache.h !== scaledH) {
+            const off = document.createElement('canvas');
+            off.width = scaledW;
+            off.height = scaledH;
+            cache = { w: scaledW, h: scaledH, offscreen: off, imageData: off.getContext('2d').createImageData(scaledW, scaledH), zbuf: new Float32Array(scaledW * scaledH) };
+            offscreenCacheRef.current = cache;
+        }
 
-        // Oh god z bufferring on a cpu (you really should use a gpu for this... thats what theyre for)
-        // Build list of candidate triangles (projected + camera-space data + normal)
+        const off = cache.offscreen;
+        const offCtx = off.getContext('2d');
+        const imageData = cache.imageData;
+        const data = imageData.data;
+        const zbuf = cache.zbuf;
+
+        // Build list of candidate triangles using scaled screen dimensions
         const drawList = [];
         const triangles = trianglesRef.current;
         for (let i = 0; i < triangles.length; i++) {
             const tri = triangles[i];
-            const screenCoords = triangleToScreen(tri, cameraRef.current, ctx.canvas.width, ctx.canvas.height);
-            // Skip triangles that are behind the camera
+            const screenCoords = triangleToScreen(tri, cameraRef.current, scaledW, scaledH);
             if (!screenCoords.v1.onScreen && !screenCoords.v2.onScreen && !screenCoords.v3.onScreen) continue;
-
-            // Edges in camera space
-            const a3 = {
-                x: screenCoords.v2.camX - screenCoords.v1.camX,
-                y: screenCoords.v2.camY - screenCoords.v1.camY,
-                z: screenCoords.v2.camZ - screenCoords.v1.camZ,
-            };
-            const b3 = {
-                x: screenCoords.v3.camX - screenCoords.v1.camX,
-                y: screenCoords.v3.camY - screenCoords.v1.camY,
-                z: screenCoords.v3.camZ - screenCoords.v1.camZ,
-            };
-            // cross product (normal in camera space)
+            const a3 = { x: screenCoords.v2.camX - screenCoords.v1.camX, y: screenCoords.v2.camY - screenCoords.v1.camY, z: screenCoords.v2.camZ - screenCoords.v1.camZ };
+            const b3 = { x: screenCoords.v3.camX - screenCoords.v1.camX, y: screenCoords.v3.camY - screenCoords.v1.camY, z: screenCoords.v3.camZ - screenCoords.v1.camZ };
             const nx = a3.y * b3.z - a3.z * b3.y;
             const ny = a3.z * b3.x - a3.x * b3.z;
             const nz = a3.x * b3.y - a3.y * b3.x;
-
-            // Determine facing by dotting the normal with vector from triangle to camera (camera at origin in camera space)
-            // vector to camera = -v1_cam
             const toCamX = -screenCoords.v1.camX;
             const toCamY = -screenCoords.v1.camY;
             const toCamZ = -screenCoords.v1.camZ;
             const dot = nx * toCamX + ny * toCamY + nz * toCamZ;
-            // front facing if dot > 0
             if (dot <= 0) continue;
-
-            // per-vertex positive depth = -camZ
             const d1 = -screenCoords.v1.camZ;
             const d2 = -screenCoords.v2.camZ;
             const d3 = -screenCoords.v3.camZ;
-
             drawList.push({ tri, screenCoords, normal: { nx, ny, nz }, d1, d2, d3 });
         }
 
-        // Prepare image buffer + z-buffer (reuse to avoid allocations)
-        const w = ctx.canvas.width | 0;
-        const h = ctx.canvas.height | 0;
-        let imageData = imageDataRef.current;
-        if (!imageData || imageData.width !== w || imageData.height !== h) {
-            imageData = ctx.createImageData(w, h);
-            imageDataRef.current = imageData;
-            zbufRef.current = new Float32Array(w * h);
-        }
-        const data = imageData.data;
-        const zbuf = zbufRef.current;
-        // reset z-buffer quickly
-        for (let i = 0, L = w * h; i < L; i++) zbuf[i] = 1e9;
-        // clear image buffer to white so background doesn't show garbage/previous frames
+        // clear zbuf and image
+        for (let i = 0, L = scaledW * scaledH; i < L; i++) zbuf[i] = 1e9;
         data.fill(255);
 
         // Precompute per-triangle raster variables
         const triCache = [];
-        // does what it says on the tin
         function parseColorFast(col) {
             if (!col) return [200, 200, 200, 255];
             if (col[0] === '#') {
@@ -308,19 +352,15 @@ const Renderer = ({ init }) => {
             const x2 = s.v2.x, y2 = s.v2.y;
             const x3 = s.v3.x, y3 = s.v3.y;
             const denom = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
-            if (Math.abs(denom) < 1e-6) continue; // degenerate
+            if (Math.abs(denom) < 1e-6) continue;
             const denomInv = 1 / denom;
-
             const minX = Math.max(0, Math.floor(Math.min(x1, x2, x3)));
-            const maxX = Math.min(w - 1, Math.ceil(Math.max(x1, x2, x3)));
+            const maxX = Math.min(scaledW - 1, Math.ceil(Math.max(x1, x2, x3)));
             const minY = Math.max(0, Math.floor(Math.min(y1, y2, y3)));
-            const maxY = Math.min(h - 1, Math.ceil(Math.max(y1, y2, y3)));
-
+            const maxY = Math.min(scaledH - 1, Math.ceil(Math.max(y1, y2, y3)));
             const r1 = 1 / Math.max(1e-6, item.d1);
             const r2 = 1 / Math.max(1e-6, item.d2);
             const r3 = 1 / Math.max(1e-6, item.d3);
-
-            // base color from triangle; normals override only if not in wireframe mode
             let rgba = parseColorFast(item.tri.color);
             if (normalsView && !wireframe) {
                 let nxn = item.normal.nx;
@@ -333,42 +373,35 @@ const Renderer = ({ init }) => {
                 const bcol = (nzn * 0.5 + 0.5) * 255 | 0;
                 rgba = [rcol, gcol, bcol, 255];
             }
-
             triCache.push({ x1, y1, x2, y2, x3, y3, denomInv, minX, maxX, minY, maxY, r1, r2, r3, rgba });
         }
 
-        // If wireframe only mode: skip rasterization and just stroke the triangles
         if (wireframe) {
-            // fill background
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, w, h);
-            ctx.save();
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 1;
-            // sort by average depth (farthest first) so nearer edges draw last
+            offCtx.fillStyle = '#FFFFFF';
+            offCtx.fillRect(0, 0, scaledW, scaledH);
+            offCtx.save();
+            offCtx.strokeStyle = '#000000';
+            offCtx.lineWidth = 1;
             drawList.sort((a, b) => ((a.d1 + a.d2 + a.d3) / 3) - ((b.d1 + b.d2 + b.d3) / 3));
             for (let item of drawList) {
                 const s = item.screenCoords;
-                ctx.beginPath();
-                ctx.moveTo(s.v1.x, s.v1.y);
-                ctx.lineTo(s.v2.x, s.v2.y);
-                ctx.lineTo(s.v3.x, s.v3.y);
-                ctx.closePath();
-                ctx.stroke();
+                offCtx.beginPath();
+                offCtx.moveTo(s.v1.x, s.v1.y);
+                offCtx.lineTo(s.v2.x, s.v2.y);
+                offCtx.lineTo(s.v3.x, s.v3.y);
+                offCtx.closePath();
+                offCtx.stroke();
             }
-            ctx.restore();
+            offCtx.restore();
         } else {
-            // Rasterize the precomputed triCache
-            // Theres gotta be a better way
             for (let t = 0, tlen = triCache.length; t < tlen; t++) {
                 const T = triCache[t];
                 const { x1, y1, x2, y2, x3, y3, denomInv, minX, maxX, minY, maxY, r1, r2, r3, rgba } = T;
                 for (let py = minY; py <= maxY; py++) {
                     const pyf = py + 0.5;
-                    let base = py * w;
+                    let base = py * scaledW;
                     for (let px = minX; px <= maxX; px++) {
                         const sxf = px + 0.5;
-                        // barycentric weights
                         const w1 = ((y2 - y3) * (sxf - x3) + (x3 - x2) * (pyf - y3)) * denomInv;
                         const w2 = ((y3 - y1) * (sxf - x3) + (x1 - x3) * (pyf - y3)) * denomInv;
                         const w3 = 1 - w1 - w2;
@@ -389,14 +422,15 @@ const Renderer = ({ init }) => {
                     }
                 }
             }
-
-            // Draw the image buffer to canvas
-            ctx.putImageData(imageData, 0, 0);
+            offCtx.putImageData(imageData, 0, 0);
         }
 
-    }
+        // draw offscreen to main canvas without smoothing
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(off, 0, 0, mainW, mainH);
+    };
 
-    useEffect(() => {
+        useEffect(() => {
         const canvas = canvasRef.current;
         const backgroundCanvas = backgroundCanvasRef.current;
         let animationFrameId = null;
@@ -563,7 +597,7 @@ const Renderer = ({ init }) => {
             document.removeEventListener('mousemove', onPointerMove);
             document.removeEventListener('touchmove', onPointerMove);
         };
-    }, [useWebGL, wireframe, normalsView]);
+    }, [wireframe, normalsView, resolutionExp]);
 
     // Dense HTML
     return (<div style={{ width: "100%", height: "100%", position: "relative" }}>
@@ -571,18 +605,49 @@ const Renderer = ({ init }) => {
             <canvas ref={backgroundCanvasRef} width={width} height={(height * 0.9)} style={{ width: "100%", height: "100%", top: "0", left: "0", position: "absolute" }} />
             <canvas ref={canvasRef} width={width} height={(height * 0.9)} style={{ width: "100%", height: "100%", top: "0", left: "0", position: "absolute" }} />
         </div>
-        {/* debug controls]) */}
-        <div style={{ position: 'absolute', left: 8, top: 8, padding: 6, background: '#e0e0e0', border: '2px solid #808080', boxShadow: '2px 2px 0 #fff inset, -2px -2px 0 #000 inset', fontFamily: 'geneva, sans-serif', fontSize: 12 }}>
-            <div style={{ marginBottom: 6, fontWeight: 'bold' }}>Debug</div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="checkbox" checked={wireframe} onChange={(e) => setWireframe(e.target.checked)} />
-                <span>Wireframe</span>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
-                <input type="checkbox" checked={normalsView} onChange={(e) => setNormalsView(e.target.checked)} />
-                <span>Normals</span>
-            </label>
-            <div style={{ marginTop: 6 }}>FPS: <strong style={{ fontFamily: 'monospace' }}>{fps}</strong></div>
+        {/* Debug control panel (macOS 9 style) */}
+        <div style={{ position: 'absolute', left: 12, top: 12, width: "15%", userSelect: 'none', zIndex: 999 }}>
+            <div style={{ backgroundColor: 'rgb(204,204,204)', border: '1px solid rgb(119,119,119)' }}>
+                <div style={{ height: 22, paddingLeft: 6, fontFamily: 'Charcoal, geneva, sans-serif', fontSize: 13, display: 'flex', alignItems: 'center' }}>
+                    <strong>Renderer Setings</strong>
+                </div>
+                    <div style={{ padding: "0.5em", background: 'linear-gradient(180deg, #fff, #ddd)' }}>
+                    <div style={{ display: 'inline', gap: 8, alignItems: 'center', marginBottom: "0.1em" }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: "0.1em" }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Charcoal' }}>
+                                <input type="checkbox" checked={wireframe} onChange={(e) => setWireframe(e.target.checked)} />
+                                <span>Wireframe</span>
+                            </label>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: "0.1em" }}>
+
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Charcoal' }}>
+                                <input type="checkbox" checked={normalsView} onChange={(e) => setNormalsView(e.target.checked)} />
+                                <span>Normals</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style={{ marginBottom: "0.1em" }}>
+                        <div style={{ fontFamily: 'Charcoal', fontSize: 12, marginBottom: 4 }}>Model</div>
+                        <select value={selectedModel || ''} onChange={(e) => setSelectedModel(e.target.value)} style={{ fontFamily: 'Charcoal', width: '100%' }}>
+                            {modelList.length === 0 && <option value="">(no models)</option>}
+                            {modelList.map((m) => (<option key={m} value={m}>{m}</option>))}
+                        </select>
+                    </div>
+
+                    <div style={{  marginBottom: "0.1em" }}>
+                    <label style={{ display: 'block', fontFamily: 'Charcoal', fontSize: 12, marginBottom: 0 }}>Resolution: {resolutionScale.toFixed(3)}x</label>
+                    <input type="range" min={0} max={4} step={0.25} value={resolutionExp} onChange={(e) => setResolutionExp(Number(e.target.value))} style={{ width: '100%' }} />
+                    <div style={{ fontFamily: 'Charcoal', fontSize: 11, marginTop: -10 }}>Internal: {Math.max(1, Math.floor(width * resolutionScale))} × {Math.max(1, Math.floor((height * resolutionScale)))} px</div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontFamily: 'Charcoal', fontSize: 12 }}>FPS: <strong style={{ fontFamily: 'monospace' }}>{fps}</strong></div>
+                        <button onClick={() => { cameraRef.current = { x: 0, y: 0, z: 1, pitch: 0, yaw: 0, fov: cameraRef.current.fov }; }} style={{ padding: '6px 8px', background: 'rgb(221,221,221)', border: '1px solid rgb(119,119,119)', fontFamily: 'Charcoal' }}>Reset</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     );

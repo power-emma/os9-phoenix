@@ -19,6 +19,7 @@ import siteIcon from './icons/portfolio.png'
 import orbitIcon from './icons/orbit.png'
 import raycastIcon from './icons/raycast.png'
 import plasmaIcon from './icons/plasma.png'
+import renderIcon from './icons/renderer.png'
 
 
 const WM = () => {
@@ -115,7 +116,7 @@ const WM = () => {
     // Blank Array useEffect means this code only runs at startup
     useEffect(() => {
         // Spawn Portfolio window
-        makeWindow(20, 24, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", <Renderer init = {{
+        makeWindow(20, 24, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", <PortfolioMain init = {{
             height: window.innerHeight - 60,
             width: practicalWidth - 40
         }}/>)
@@ -139,7 +140,7 @@ const WM = () => {
                 width: practicalWidth - 40
             }}
         />)}}
-        style={{position: "absolute", top: "32px", right: "20px", border: "none", background: "none"}} >
+        style={{position: "absolute", top: "32px", right: "18px", border: "none", background: "none"}} >
             <img src={siteIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Emma's Website</h4>
         </button>
@@ -172,6 +173,15 @@ const WM = () => {
         }}/>)} } style={{position: "absolute", top: "332px", right: "58px", border: "none", background: "none"}} >
             <img src={plasmaIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
             <h4 style={iconTextStyle}>Plasma</h4>
+        </button>
+
+        <button onClick={() =>{
+        makeWindow(20, 24, window.innerHeight - 60, practicalWidth - 40, "3D Renderer", <Renderer init = {{
+            height: window.innerHeight - 60,
+            width: practicalWidth - 40
+        }}/>)} } style={{position: "absolute", top: "432px", right: "34px", border: "none", background: "none"}} >
+            <img src={renderIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
+            <h4 style={iconTextStyle}>3D Renderer</h4>
         </button>
     </div>
 
