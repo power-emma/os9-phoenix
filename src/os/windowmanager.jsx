@@ -12,6 +12,7 @@ import PortfolioMain from '../apps/portfolio/portfoliomain';
 import Orbit from '../apps/orbit/orbitbridge';
 import Raycast from '../apps/raycast/raycast';
 import Plasma from '../apps/plasma/plasma';
+import Renderer from '../apps/3d/renderer';
 
 // Images
 import siteIcon from './icons/portfolio.png'
@@ -114,7 +115,7 @@ const WM = () => {
     // Blank Array useEffect means this code only runs at startup
     useEffect(() => {
         // Spawn Portfolio window
-        makeWindow(20, 24, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", <PortfolioMain init = {{
+        makeWindow(20, 24, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", <Renderer init = {{
             height: window.innerHeight - 60,
             width: practicalWidth - 40
         }}/>)
