@@ -108,6 +108,7 @@ const Renderer = ({ init }) => {
     // Debug toggles (wireframe and normals visualization)
     const [wireframe, setWireframe] = useState(false);
     const [normalsView, setNormalsView] = useState(true);
+    const [showTileDebug, setShowTileDebug] = useState(false);
     const [fps, setFps] = useState(0);
     const framesRef2 = useRef(0);
     const lastFpsTimeRef = useRef(performance.now());
@@ -128,6 +129,10 @@ const Renderer = ({ init }) => {
     const [modelList, setModelList] = useState([]);
     const [selectedModel, setSelectedModel] = useState(null);
     const modelsCacheRef = useRef({});
+    // Tile size options (8,16,32,64)
+    const [tileSize, setTileSize] = useState(16);
+    // Hovered tile info for UI: {tx, ty, timeMs}
+    const [hoverTile, setHoverTile] = useState(null);
 
     // Cube vertices
     const v = [
@@ -394,31 +399,111 @@ const Renderer = ({ init }) => {
             }
             offCtx.restore();
         } else {
+            // Rasterization loop
+            // Every optimization here is key, as it has to loop through every pixel of the screen for every triangle
+            // Tiled rasterization (triangle-first): for each triangle, iterate only the tiles it overlaps
+            // Compute tile geometry in a scope visible to the overlay drawing code below
+            const TILE = tileSize;
+            const tilesX = Math.max(1, Math.ceil(scaledW / TILE));
+            const tilesY = Math.max(1, Math.ceil(scaledH / TILE));
+            // prepare per-tile timing buffer and work-count buffer
+            if (!cache.tilesTime || cache.tilesTime.length !== tilesX * tilesY) cache.tilesTime = new Float32Array(tilesX * tilesY);
+            else cache.tilesTime.fill(0);
+            if (!cache.tilesWork || cache.tilesWork.length !== tilesX * tilesY) cache.tilesWork = new Float32Array(tilesX * tilesY);
+            else cache.tilesWork.fill(0);
+
             for (let t = 0, tlen = triCache.length; t < tlen; t++) {
                 const T = triCache[t];
-                const { x1, y1, x2, y2, x3, y3, denomInv, minX, maxX, minY, maxY, r1, r2, r3, rgba } = T;
-                for (let py = minY; py <= maxY; py++) {
-                    const pyf = py + 0.5;
-                    let base = py * scaledW;
-                    for (let px = minX; px <= maxX; px++) {
-                        const sxf = px + 0.5;
-                        const w1 = ((y2 - y3) * (sxf - x3) + (x3 - x2) * (pyf - y3)) * denomInv;
-                        const w2 = ((y3 - y1) * (sxf - x3) + (x1 - x3) * (pyf - y3)) * denomInv;
-                        const w3 = 1 - w1 - w2;
-                        if (w1 >= -0.0005 && w2 >= -0.0005 && w3 >= -0.0005) {
-                            const rr = w1 * r1 + w2 * r2 + w3 * r3;
-                            if (rr <= 0) continue;
-                            const depth = 1 / rr;
-                            const idx = base + px;
-                            if (depth < zbuf[idx]) {
-                                zbuf[idx] = depth;
-                                const di = idx * 4;
-                                data[di] = rgba[0];
-                                data[di + 1] = rgba[1];
-                                data[di + 2] = rgba[2];
-                                data[di + 3] = rgba[3];
+
+                // For some reason this is faster in js
+                const x1 = T.x1
+                const y1 = T.y1
+                const x2 = T.x2
+                const y2 = T.y2
+                const x3 = T.x3
+                const y3 = T.y3
+                const denomInv = T.denomInv
+                const minX = T.minX
+                const maxX = T.maxX
+                const minY = T.minY
+                const maxY = T.maxY
+                const r1 = T.r1
+                const r2 = T.r2
+                const r3 = T.r3
+                const rgba = T.rgba
+
+                // Cull triangles with backface or zero area
+                if (denomInv >= 0) continue;
+
+                // compute tile range this triangle overlaps
+                const tileMinX = Math.max(0, Math.floor(minX / TILE));
+                const tileMaxX = Math.min(tilesX - 1, Math.floor(maxX / TILE));
+                const tileMinY = Math.max(0, Math.floor(minY / TILE));
+                const tileMaxY = Math.min(tilesY - 1, Math.floor(maxY / TILE));
+
+                // Precompute edge function deltas
+                const dw1dx = (y2 - y3) * denomInv;
+                const dw1dy = (x3 - x2) * denomInv;
+                const dw2dx = (y3 - y1) * denomInv;
+                const dw2dy = (x1 - x3) * denomInv;
+
+                for (let ty = tileMinY; ty <= tileMaxY; ty++) {
+                    const ty0 = ty * TILE;
+                    const ty1 = Math.min(scaledH - 1, (ty + 1) * TILE - 1);
+                    const minYi = Math.max(minY, ty0);
+                    const maxYi = Math.min(maxY, ty1);
+                    if (minYi > maxYi) continue;
+
+                    for (let tx = tileMinX; tx <= tileMaxX; tx++) {
+                        // count work for this tile (number of pixel tests / loop iterations)
+                        const tileIndex = ty * tilesX + tx;
+                        let tileWork = 0;
+                        const tx0 = tx * TILE;
+                        const tx1 = Math.min(scaledW - 1, (tx + 1) * TILE - 1);
+                        const minXi = Math.max(minX, tx0);
+                        const maxXi = Math.min(maxX, tx1);
+                        if (minXi > maxXi) continue;
+
+                        // Start barycentric at (minXi, minYi)
+                        const pyf = minYi + 0.5;
+                        let w1_row = ((y2 - y3) * (minXi + 0.5 - x3) + (x3 - x2) * (pyf - y3)) * denomInv;
+                        let w2_row = ((y3 - y1) * (minXi + 0.5 - x3) + (x1 - x3) * (pyf - y3)) * denomInv;
+
+                        for (let py = minYi; py <= maxYi; py++) {
+                            let base = py * scaledW;
+                            let w1 = w1_row;
+                            let w2 = w2_row;
+                            for (let px = minXi; px <= maxXi; px++) {
+                                const w3 = 1 - w1 - w2;
+                                // count this pixel test
+                                tileWork ++;
+                                if (w1 >= 0 && w2 >= 0 && w3 >= 0) {
+                                    const rr = w1 * r1 + w2 * r2 + w3 * r3;
+                                    if (rr > 0) {
+                                        const depth = 1 / rr;
+                                        const idx = base + px;
+                                        if (depth < zbuf[idx]) {
+                                            zbuf[idx] = depth;
+                                            const di = idx << 2;
+                                            data[di] = rgba[0];
+                                            data[di + 1] = rgba[1];
+                                            data[di + 2] = rgba[2];
+                                            data[di + 3] = rgba[3];
+                                            
+                                        }
+
+                                    }
+                                }
+                                w1 += dw1dx;
+                                w2 += dw2dx;
                             }
+                            w1_row += dw1dy;
+                            w2_row += dw2dy;
                         }
+                        tileWork *= 8;
+                        // record work-count for this tile
+                        if (!cache.tilesWork || cache.tilesWork.length !== tilesX * tilesY) cache.tilesWork = new Float32Array(tilesX * tilesY);
+                        cache.tilesWork[tileIndex] += tileWork;
                     }
                 }
             }
@@ -428,6 +513,45 @@ const Renderer = ({ init }) => {
         // draw offscreen to main canvas without smoothing
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(off, 0, 0, mainW, mainH);
+
+        // Tile debug overlay: draw processed tiles and shade by compute work-count
+        if (showTileDebug) {
+            const cacheWork = cache.tilesWork;
+            const TILE = tileSize;
+            const tilesX = Math.max(1, Math.ceil(scaledW / TILE));
+            const tilesY = Math.max(1, Math.ceil(scaledH / TILE));
+
+            if (cacheWork && cacheWork.length > 0) {
+                // compute scale from scaled canvas -> main canvas
+                const sx = mainW / Math.max(1, scaledW);
+                const sy = mainH / Math.max(1, scaledH);
+                // find max (avoid division by zero)
+                let maxW = 0;
+                for (let i = 0; i < cacheWork.length; i++) if (cacheWork[i] > maxW) maxW = cacheWork[i];
+                if (maxW <= 0) maxW = 1;
+                //ctx.save();
+                ctx.lineWidth = 1;
+                for (let ty = 0; ty < tilesY; ty++) {
+                    for (let tx = 0; tx < tilesX; tx++) {
+                        const i = ty * tilesX + tx;
+                        const wVal = cacheWork[i];
+                        if (!wVal) continue;
+                        // give a small visible floor so very-fast tiles are still faintly visible
+                        const minAlpha = 0.06;
+                        const alpha = Math.min(0.85, minAlpha + (wVal / maxW) * (0.85 - minAlpha));
+                        const x = tx * TILE * sx;
+                        const y = ty * TILE * sy;
+                        const w = Math.min(mainW - x, TILE * sx);
+                        const h = Math.min(mainH - y, TILE * sy);
+                        ctx.fillStyle = `rgba(255,0,0,${alpha})`;
+                        ctx.fillRect(x, y, w, h);
+                        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                        ctx.strokeRect(x , y , w - 1, h - 1);
+                    }
+                }
+                //ctx.restore();
+            }
+        }
     };
 
         useEffect(() => {
@@ -583,6 +707,32 @@ const Renderer = ({ init }) => {
 
         animationFrameId = window.requestAnimationFrame(render2D);
 
+        // Tile hover: show per-tile timing when hovering the main canvas
+        function onCanvasHover(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            const mainW = canvas.width || rect.width;
+            const mainH = canvas.height || rect.height;
+            const cache = offscreenCacheRef.current || {};
+            const scaledW = Math.max(1, Math.floor(mainW * resolutionScale));
+            const scaledH = Math.max(1, Math.floor(mainH * resolutionScale));
+            const sx = mainW / Math.max(1, scaledW);
+            const sy = mainH / Math.max(1, scaledH);
+            const tx = Math.floor(mx / (tileSize * sx));
+            const ty = Math.floor(my / (tileSize * sy));
+            const tilesX = Math.max(1, Math.ceil(scaledW / tileSize));
+            const tilesY = Math.max(1, Math.ceil(scaledH / tileSize));
+            if (tx < 0 || ty < 0 || tx >= tilesX || ty >= tilesY) {
+                setHoverTile(null);
+                return;
+            }
+            const idx = ty * tilesX + tx;
+            const val = (cache.tilesWork && cache.tilesWork[idx]) ? cache.tilesWork[idx] : 0;
+            setHoverTile({ tx, ty, val });
+        }
+        canvas.addEventListener('mousemove', onCanvasHover);
+
 
 
         return () => {
@@ -596,8 +746,9 @@ const Renderer = ({ init }) => {
             document.removeEventListener('touchend', onPointerUp);
             document.removeEventListener('mousemove', onPointerMove);
             document.removeEventListener('touchmove', onPointerMove);
+            canvas.removeEventListener('mousemove', onCanvasHover);
         };
-    }, [wireframe, normalsView, resolutionExp]);
+    }, [wireframe, normalsView, showTileDebug, tileSize, resolutionExp]);
 
     // Dense HTML
     return (<div style={{ width: "100%", height: "100%", position: "relative" }}>
@@ -625,6 +776,25 @@ const Renderer = ({ init }) => {
                                 <input type="checkbox" checked={normalsView} onChange={(e) => setNormalsView(e.target.checked)} />
                                 <span>Normals</span>
                             </label>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: "0.1em" }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Charcoal' }}>
+                                <input type="checkbox" checked={showTileDebug} onChange={(e) => setShowTileDebug(e.target.checked)} />
+                                <span>Show tiles</span>
+                            </label>
+                            <div style={{ marginLeft: 6, fontFamily: 'Charcoal', fontSize: 11 }}>
+                                <label style={{ marginRight: 6 }}>Tile</label>
+                                <select value={tileSize} onChange={(e) => setTileSize(Number(e.target.value))} style={{ fontFamily: 'Charcoal' }}>
+                                    <option value={8}>8</option>
+                                    <option value={16}>16</option>
+                                    <option value={32}>32</option>
+                                    <option value={64}>64</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style={{ marginBottom: "0.1em", fontFamily: 'Charcoal', fontSize: 12 }}>
+                            {hoverTile ? <div>Tile ({hoverTile.tx},{hoverTile.ty}): {Math.round(hoverTile.val).toLocaleString()} Operations</div> : <div style={{ color: '#444' }}>Hover a tile to see work-count</div>}
                         </div>
                     </div>
 
