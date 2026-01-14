@@ -182,7 +182,7 @@ const PortfolioMain = ({init}) => {
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
-            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px"}} >
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px"}}  >
                 <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
                     <h1 style={{fontSize: h2Size}}>This Website!</h1>
                 </div>
@@ -190,8 +190,9 @@ const PortfolioMain = ({init}) => {
                     <p style={{fontSize: heropSize}}>Combining modern web design paradigms with the aesthetics of an operating system from the 90's, this React based website allows for a unique, window based take to display other web based applications</p>
                 </div>
                 <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
-                    <p style={{fontSize: heropSize}}>Tip: Move the Windows Around and Click the Desktop Icons!</p>
+                    <p style={{fontSize: heropSize}}>Tip: Move the Windows Around, Resize the windows, and Click the Desktop Icons!</p>
                 </div>
+                <p>Date Created: December 2024</p>
                 <br/>
             </div>
             <div className = "col-sm-2 d-flex justify-content-center align-items-center">
@@ -203,7 +204,29 @@ const PortfolioMain = ({init}) => {
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
-            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px"}} >
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px"}} >
+                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+                    <h1 style={{fontSize: h2Size}}>3D Software Renderer</h1>
+                </div>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                    <p style={{fontSize: heropSize}} >A fully functional 3d object renderer, with arbitrary object loading, polygon ordering, and rasterization </p>
+                </div>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                    <p style={{fontSize: heropSize}}> Note: Works best on PC due to WASD/Arrow key controls</p>
+                </div>
+                <p>Date Created: January 2026</p>
+                <br/>
+            </div>
+            <div className = "col-sm-2 d-flex justify-content-center align-items-center">
+                
+            </div>
+        </div>
+
+        <div className = "h-75 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", marginTop: "50px"}}>
+            <div className = "col-sm-2 d-flex justify-content-center"> 
+
+            </div>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px"}} >
                 <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
                     <h1 style={{fontSize: h2Size}}>Orbit.JS</h1>
                 </div>
@@ -213,6 +236,7 @@ const PortfolioMain = ({init}) => {
                 <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
                     <p style={{fontSize: heropSize}}> Tip: Orbits are difficult to create, place planets carefully to avoid collisions</p>
                 </div>
+                <p>Date Created: June 2023 | Date Ported: January 2025</p>
                 <br/>
             </div>
             <div className = "col-sm-2 d-flex justify-content-center align-items-center">
@@ -224,7 +248,29 @@ const PortfolioMain = ({init}) => {
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
-            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px"}} >
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px"}} >
+                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+                    <h1 style={{fontSize: h2Size}}>Plasma</h1>
+                </div>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                    <p style={{fontSize: heropSize}} >Inspired by famous Demoscene examples, plasma is a vibrant visualization that works on the same principles as electromagnetic radiation</p>
+                </div>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                    <p style={{fontSize: heropSize}}> Tip: It almost looks too clean at native resolution, use the resolution slider for a more old-school demo look.</p>
+                </div>
+                <p>Date Created: December 2025</p>
+                <br/>
+            </div>
+            <div className = "col-sm-2 d-flex justify-content-center align-items-center">
+                
+            </div>
+        </div>
+
+        <div className = "h-75 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", marginTop: "50px"}}>
+            <div className = "col-sm-2 d-flex justify-content-center"> 
+
+            </div>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px"}} >
                 <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
                     <h1 style={{fontSize: h2Size}}>Raycast</h1>
                 </div>
@@ -234,6 +280,7 @@ const PortfolioMain = ({init}) => {
                 <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
                     <p style={{fontSize: heropSize,  display: "block"}}>Tip: Control with WASD or the Arrow Keys</p>
                 </div>
+                <p>Date Created: August 2021 | Date Ported: February 2025</p>
                 <br/>
             </div>
             <div className = "col-sm-2 d-flex justify-content-center align-items-center">
