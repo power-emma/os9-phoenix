@@ -20,7 +20,10 @@ cd "$ROOT/client"
 if [ ! -d "node_modules" ]; then
   npm install --no-audit --no-fund
 fi
-npm run build
+# Build with PUBLIC_URL set to '/' so assets are referenced from the current host root
+# This overrides the package.json "homepage" or package-level defaults that may point to an external domain.
+echo "Building client with PUBLIC_URL=/ to produce site-root-relative asset URLs"
+PUBLIC_URL="/" npm run build
 
 # Locate build output (vite default is client/dist). Try a few common locations.
 BUILD_DIR=""
