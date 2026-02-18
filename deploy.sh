@@ -174,6 +174,59 @@ for f in /etc/nginx/conf.d/*.conf; do
   sudo mv "$f" "${f}.bak.${TS}" || true
 done
 
+# Remove the default server{} block baked into /etc/nginx/nginx.conf (Amazon Linux /
+# stock nginx ships with a catch-all server block pointing at /usr/share/nginx/html
+# that competes with our conf.d config and wins for domain-name requests).
+NGINX_MAIN="/etc/nginx/nginx.conf"
+if sudo grep -q "root\s*/usr/share/nginx/html" "$NGINX_MAIN" 2>/dev/null; then
+  echo "Found default server block in $NGINX_MAIN pointing at /usr/share/nginx/html — removing it"
+  sudo cp "$NGINX_MAIN" "${NGINX_MAIN}.bak.${TS}"
+  # Delete every line from a bare 'server {' up through its closing '}' that contains
+  # the /usr/share/nginx/html root directive.
+  sudo python3 - "$NGINX_MAIN" <<'PYEOF'
+import sys, re
+
+path = sys.argv[1]
+with open(path) as f:
+    content = f.read()
+
+# Match a top-level server { ... } block that contains /usr/share/nginx/html
+# Strategy: find all server{} blocks and drop the ones with that root.
+result = []
+i = 0
+while i < len(content):
+    # look for 'server' followed by optional whitespace and '{'
+    m = re.search(r'\bserver\s*\{', content[i:])
+    if not m:
+        result.append(content[i:])
+        break
+    # append everything before this match
+    result.append(content[i:i + m.start()])
+    block_start = i + m.start()
+    # walk forward to find the matching closing brace
+    depth = 0
+    j = block_start
+    while j < len(content):
+        if content[j] == '{':
+            depth += 1
+        elif content[j] == '}':
+            depth -= 1
+            if depth == 0:
+                break
+        j += 1
+    block = content[block_start:j+1]
+    if '/usr/share/nginx/html' not in block:
+        result.append(block)
+    else:
+        print(f"Removed default server block ({block.count(chr(10))+1} lines)", file=sys.stderr)
+    i = j + 1
+
+with open(path, 'w') as f:
+    f.write(''.join(result))
+PYEOF
+  echo "Done. Backup saved as ${NGINX_MAIN}.bak.${TS}"
+fi
+
 # Write a clear, two-block nginx configuration:
 # 1) a minimal server that listens for www.poweremma.com and redirects to the
 #    bare domain (preserves http scheme here; certbot will create a 443 block).
