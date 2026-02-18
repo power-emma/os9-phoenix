@@ -318,14 +318,17 @@ else
   echo "nginx restarted successfully"
 fi
 
-# Optional: enable HTTPS using Let's Encrypt via certbot.
-# Trigger by setting ENABLE_HTTPS=1 in the environment when running the script.
-if [ "${ENABLE_HTTPS:-0}" = "1" ]; then
-  echo "ENABLE_HTTPS=1 detected — attempting to obtain and install TLS certificates via certbot (Let's Encrypt)."
-  # Ensure certbot is available; try apt-get then snap as fallbacks.
+# Enable HTTPS using Let's Encrypt via certbot (always on).
+# Skip by setting ENABLE_HTTPS=0 in the environment when running the script.
+if [ "${ENABLE_HTTPS:-1}" = "1" ]; then
+  echo "HTTPS enabled — attempting to obtain/renew TLS certificates via certbot (Let's Encrypt)."
+  # Ensure certbot is available; try dnf (Amazon Linux/RHEL), apt-get, then snap as fallbacks.
   if ! command -v certbot >/dev/null 2>&1; then
     echo "certbot not found — attempting to install it. This requires network access and sudo."
-    if command -v apt-get >/dev/null 2>&1; then
+    if command -v dnf >/dev/null 2>&1; then
+      echo "Installing certbot via dnf..."
+      sudo dnf install -y certbot python3-certbot-nginx || true
+    elif command -v apt-get >/dev/null 2>&1; then
       echo "Installing certbot via apt-get..."
       sudo apt-get update -y || true
       sudo apt-get install -y certbot python3-certbot-nginx || true
@@ -336,11 +339,11 @@ if [ "${ENABLE_HTTPS:-0}" = "1" ]; then
       sudo snap install --classic certbot || true
       sudo ln -sf /snap/bin/certbot /usr/bin/certbot || true
     else
-      echo "Could not find apt-get or snap to install certbot. Please install certbot manually and re-run the script with ENABLE_HTTPS=1"
+      echo "Could not find dnf, apt-get, or snap to install certbot. Please install certbot manually."
       exit 1
     fi
   else
-    echo "certbot found — proceeding to obtain certificates."
+    echo "certbot found — proceeding to obtain/renew certificates."
   fi
 
   echo "Ensure ports 80 and 443 are reachable from the internet (Let's Encrypt validation will contact your server)."

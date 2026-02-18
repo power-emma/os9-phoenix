@@ -9,17 +9,8 @@ export default function Chat({ init }) {
   const lastTsRef = useRef(0);
   const pollingRef = useRef(null);
   const listRef = useRef(null);
-  // Compute API base dynamically so the client can talk to a backend on the same host
-  // Works for both localhost and raw IP addresses (e.g. 18.220.232.23)
-  const API_BASE = (() => {
-    try {
-      const host = window.location.hostname || 'localhost';
-      const proto = window.location.protocol || 'http:';
-      return `${proto}//${host}:3000`;
-    } catch (e) {
-      return 'http://localhost:3000';
-    }
-  })();
+  // API is always on the same origin — nginx proxies /api/ to the backend.
+  const API_BASE = '';
   // track the last time the user cleared the local view; messages before this ts are hidden
   const lastClearRef = useRef(() => {
     try { return parseInt(localStorage.getItem('chat.lastClear') || '0', 10) || 0 } catch (e) { return 0 }
