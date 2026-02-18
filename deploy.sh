@@ -67,6 +67,23 @@ if sudo grep -R "/var/www/html/my-react-app/build" /etc/nginx -n >/dev/null 2>&1
   fi
 fi
 
+# Safety: some builds may still contain absolute references to the production domain (poweremma.com).
+# Replace any such occurrences in the deployed files with root-relative paths so the site works when
+# served from this host. This is a fallback to handle stale or misconfigured builds.
+PROD_DOMAIN="https://poweremma.com"
+echo "Rewriting any occurrences of $PROD_DOMAIN in deployed files to root-relative paths..."
+sudo grep -R --line-number --binary-files=without-match "$PROD_DOMAIN" "$TARGET_DIR" || true
+# Replace in-place (create backup .bak) across text files under target dir
+sudo find "$TARGET_DIR" -type f -exec sed -i.bak "s|$PROD_DOMAIN||g" {} + || true
+echo "Stripped $PROD_DOMAIN from deployed files (backups with .bak created)."
+REMNANTS=$(sudo grep -R --line-number --binary-files=without-match "$PROD_DOMAIN" "$TARGET_DIR" || true)
+if [ -n "$REMNANTS" ]; then
+  echo "Warning: some occurrences of $PROD_DOMAIN remain in deployed files:";
+  echo "$REMNANTS";
+else
+  echo "No remaining $PROD_DOMAIN references found in deployed files."
+fi
+
 # Optionally set ownership to current user:web-group (adjust as needed)
 if id -u >/dev/null 2>&1; then
   CURUSER=$(id -un)
