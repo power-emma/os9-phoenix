@@ -152,37 +152,40 @@ fi
 # Install nginx site config for this app (serve static build and proxy /api to backend)
 NGINX_CONF="/etc/nginx/conf.d/os9_phoenix.conf"
 echo "Writing nginx config to $NGINX_CONF (requires sudo)"
-sudo bash -c "cat > $NGINX_CONF" <<'NGCONF'
+# Allow serving via the static IP and the canonical domain. Include '_' as a catch-all.
+NGINX_HOSTS="18.190.101.255 poweremma.com _"
+sudo tee "$NGINX_CONF" > /dev/null <<NGCONF
 server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
-    server_name _;
+  listen 80 default_server;
+  listen [::]:80 default_server;
+  server_name $NGINX_HOSTS;
 
-    root /var/www/html/my-react-app/build;
-    index index.html;
+  # Serve the deployed directory root (matches the atomic deploy target)
+  root $TARGET_DIR;
+  index index.html;
 
-    access_log /var/log/nginx/os9_phoenix.access.log;
-    error_log  /var/log/nginx/os9_phoenix.error.log warn;
+  access_log /var/log/nginx/os9_phoenix.access.log;
+  error_log  /var/log/nginx/os9_phoenix.error.log warn;
 
-    location /api/ {
-        proxy_pass http://127.0.0.1:3000/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+  location /api/ {
+    proxy_pass http://127.0.0.1:3000/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
 
-    # Optional: serve static assets with long cache
-    location ~* \.(?:css|js|jpg|jpeg|gif|png|svg|ico|webp|ttf|woff2?)$ {
-        try_files $uri =404;
-        access_log off;
-        add_header Cache-Control "public, max-age=31536000, immutable";
-    }
+  # Optional: serve static assets with long cache
+  location ~* \.(?:css|js|jpg|jpeg|gif|png|svg|ico|webp|ttf|woff2?)$ {
+    try_files $uri =404;
+    access_log off;
+    add_header Cache-Control "public, max-age=31536000, immutable";
+  }
 }
 NGCONF
 
