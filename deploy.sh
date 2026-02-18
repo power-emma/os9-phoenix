@@ -45,15 +45,39 @@ sudo rm -rf "$TARGET_DIR"/*
 # copy files
 sudo cp -r "$BUILD_DIR"/* "$TARGET_DIR"/
 
-# Optionally set ownership to current user:www-data (adjust as needed)
+# Optionally set ownership to current user:web-group (adjust as needed)
 if id -u >/dev/null 2>&1; then
   CURUSER=$(id -un)
-  sudo chown -R "$CURUSER":www-data "$TARGET_DIR" || true
+  # detect a reasonable web group on the host; common values: www-data, nginx, apache
+  WEB_GROUP=""
+  for g in www-data nginx apache www; do
+    if getent group "$g" >/dev/null 2>&1; then
+      WEB_GROUP="$g"
+      break
+    fi
+  done
+  if [ -z "$WEB_GROUP" ]; then
+    echo "No common web group (www-data/nginx/apache) found on system; setting ownership to ${CURUSER} only"
+    sudo chown -R "$CURUSER":"$CURUSER" "$TARGET_DIR" || true
+  else
+    echo "Detected web group: $WEB_GROUP — setting ownership to ${CURUSER}:$WEB_GROUP"
+    sudo chown -R "$CURUSER":$WEB_GROUP "$TARGET_DIR" || true
+  fi
 fi
 
 # Reload nginx to pick up new files
-echo "Reloading nginx (requires sudo)..."
 sudo systemctl reload nginx
+echo "Reloading nginx (requires sudo)..."
+if ! sudo systemctl reload nginx; then
+  echo "nginx reload failed — printing nginx status and recent error log lines"
+  sudo systemctl status nginx --no-pager || true
+  if [ -f /var/log/nginx/error.log ]; then
+    echo "--- /var/log/nginx/error.log (last 50 lines) ---"
+    sudo tail -n 50 /var/log/nginx/error.log || true
+  fi
+else
+  echo "nginx reloaded successfully"
+fi
 
 # Start the API server (server/) on port 3000
 if [ ! -d "$ROOT/server" ]; then
@@ -80,4 +104,22 @@ PID=$!
 
 echo "API server started (pid: $PID). Logs: $LOGFILE"
 
-echo "Deploy complete." 
+echo "Deploy complete."
+
+# Print helpful diagnostics for 500 responses: show the last bit of nginx and server logs
+echo "--- Diagnostic summary ---"
+if [ -f /var/log/nginx/error.log ]; then
+  echo "Recent nginx errors (last 30 lines):"
+  sudo tail -n 30 /var/log/nginx/error.log || true
+else
+  echo "No /var/log/nginx/error.log found"
+fi
+
+if [ -f "$LOGFILE" ]; then
+  echo "Recent API server log (last 60 lines): $LOGFILE"
+  tail -n 60 "$LOGFILE" || true
+else
+  echo "API server log $LOGFILE not found"
+fi
+
+echo "If you still see 500 errors, check the above logs and ensure nginx is configured to serve $TARGET_DIR and/or proxy to the API on port 3000."
