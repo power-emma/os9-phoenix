@@ -85,24 +85,81 @@ if [ ! -d "$ROOT/server" ]; then
   exit 1
 fi
 
-echo "Starting API server in background (logs -> /var/log/os9_phoenix_server.log)"
+echo "Configuring and starting API server via systemd"
 cd "$ROOT/server"
 # install server deps if needed
 if [ ! -d "node_modules" ]; then
   npm install --no-audit --no-fund
 fi
 
-# Use nohup to run in background; keep log file under /var/log (requires sudo to write there)
-LOGFILE="/var/log/os9_phoenix_server.log"
-# Ensure log file exists and is writable by current user (via sudo)
-sudo touch "$LOGFILE"
-sudo chown $(id -u):$(id -g) "$LOGFILE" || true
+# Determine service name and path
+SERVICE_NAME="os9_phoenix_api.service"
+SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME"
 
-nohup npm start >"$LOGFILE" 2>&1 &
+# Stop any existing systemd service instance
+if sudo systemctl list-units --full -all | grep -q "$SERVICE_NAME"; then
+  echo "Stopping existing systemd service $SERVICE_NAME"
+  sudo systemctl stop "$SERVICE_NAME" || true
+fi
 
-PID=$!
+# Kill any process currently listening on required ports (to avoid EADDRINUSE)
+# Configure ports we want to free before starting the API. Add more ports if needed.
+PORTS_TO_FREE=(3000)
+for P in "${PORTS_TO_FREE[@]}"; do
+  if sudo ss -ltnp 2>/dev/null | grep -q ":${P}\b"; then
+    echo "Found process(es) listening on :${P} — attempting to kill"
+    # list PIDs listening on the port
+    PIDS=$(sudo lsof -iTCP:${P} -sTCP:LISTEN -t || true)
+    if [ -n "$PIDS" ]; then
+      echo "Killing PIDs on port ${P}: $PIDS"
+      echo "$PIDS" | xargs -r sudo kill -9 || true
+      # small pause to allow sockets to be released
+      sleep 1
+    else
+      echo "No PIDs found by lsof for port ${P}, attempting to find via ss"
+      # fallback: extract PIDs from ss output
+      SSSPIDS=$(sudo ss -ltnp 2>/dev/null | grep ":${P}\b" | sed -n 's/.*pid=\([0-9]*\),.*/\1/p' | tr '\n' ' ')
+      if [ -n "$SSSPIDS" ]; then
+        echo "Killing PIDs on port ${P} (from ss): $SSSPIDS"
+        echo "$SSSPIDS" | xargs -r sudo kill -9 || true
+        sleep 1
+      fi
+    fi
+  else
+    echo "No process listening on port ${P}"
+  fi
+done
 
-echo "API server started (pid: $PID). Logs: $LOGFILE"
+echo "Writing systemd unit to $SERVICE_PATH (requires sudo)"
+sudo tee "$SERVICE_PATH" > /dev/null <<EOF
+[Unit]
+Description=os9-phoenix API
+After=network.target
+
+[Service]
+Type=simple
+User=$CURUSER
+WorkingDirectory=$ROOT/server
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/env npm start
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo chmod 644 "$SERVICE_PATH"
+sudo systemctl daemon-reload
+sudo systemctl enable --now "$SERVICE_NAME"
+
+echo "Started systemd service: $SERVICE_NAME"
+sudo systemctl status "$SERVICE_NAME" --no-pager || true
+
+echo "Recent journal for $SERVICE_NAME (last 60 lines):"
+sudo journalctl -u "$SERVICE_NAME" -n 60 --no-pager || true
 
 echo "Deploy complete."
 
