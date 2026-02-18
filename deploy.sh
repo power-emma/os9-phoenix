@@ -226,6 +226,43 @@ else
   echo "nginx reloaded successfully"
 fi
 
+# Optional: enable HTTPS using Let's Encrypt via certbot.
+# Trigger by setting ENABLE_HTTPS=1 in the environment when running the script.
+if [ "${ENABLE_HTTPS:-0}" = "1" ]; then
+  echo "ENABLE_HTTPS=1 detected — attempting to obtain and install TLS certificates via certbot (Let's Encrypt)."
+  # Ensure certbot is available; try apt-get then snap as fallbacks.
+  if ! command -v certbot >/dev/null 2>&1; then
+    echo "certbot not found — attempting to install it. This requires network access and sudo."
+    if command -v apt-get >/dev/null 2>&1; then
+      echo "Installing certbot via apt-get..."
+      sudo apt-get update -y || true
+      sudo apt-get install -y certbot python3-certbot-nginx || true
+    elif command -v snap >/dev/null 2>&1; then
+      echo "Installing certbot via snap..."
+      sudo snap install core || true
+      sudo snap refresh core || true
+      sudo snap install --classic certbot || true
+      sudo ln -sf /snap/bin/certbot /usr/bin/certbot || true
+    else
+      echo "Could not find apt-get or snap to install certbot. Please install certbot manually and re-run the script with ENABLE_HTTPS=1"
+      exit 1
+    fi
+  else
+    echo "certbot found — proceeding to obtain certificates."
+  fi
+
+  echo "Ensure ports 80 and 443 are reachable from the internet (Let's Encrypt validation will contact your server)."
+  echo "Requesting certificates for: poweremma.com, www.poweremma.com"
+  CERT_EMAIL="${CERT_EMAIL:-admin@poweremma.com}"
+
+  # Use certbot --nginx to automatically edit nginx config and enable redirect to HTTPS.
+  sudo certbot --nginx -n --agree-tos --redirect -m "$CERT_EMAIL" -d poweremma.com -d www.poweremma.com || {
+    echo "certbot failed to obtain or install certificates. Check /var/log/letsencrypt for details."; sudo ls -la /var/log/letsencrypt || true; exit 1
+  }
+
+  echo "Certificates obtained and nginx configured for HTTPS. certbot will set up automatic renewal."
+fi
+
 # Start the API server (server/) on port 3000
 if [ ! -d "$ROOT/server" ]; then
   echo "Error: server directory not found at $ROOT/server"
