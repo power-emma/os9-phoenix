@@ -153,7 +153,7 @@ fi
 NGINX_CONF="/etc/nginx/conf.d/os9_phoenix.conf"
 echo "Writing nginx config to $NGINX_CONF (requires sudo)"
 # Allow serving via the static IP and the canonical domain. Include '_' as a catch-all.
-NGINX_HOSTS="18.190.101.255 poweremma.com _"
+NGINX_HOSTS="18.190.101.255 poweremma.com www.poweremma.com _"
 sudo tee "$NGINX_CONF" > /dev/null <<NGCONF
 server {
   listen 80 default_server;
