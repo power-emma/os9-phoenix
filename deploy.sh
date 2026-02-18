@@ -220,6 +220,20 @@ if [ -n "$WEB_GROUP" ]; then
 fi
 
 echo "Testing nginx configuration"
+# Ensure nginx service is enabled and running. If it's not active, start it.
+echo "Ensuring nginx service is enabled and running"
+if ! sudo systemctl is-enabled --quiet nginx >/dev/null 2>&1; then
+  echo "Enabling nginx service"
+  sudo systemctl enable nginx || true
+fi
+if ! sudo systemctl is-active --quiet nginx >/dev/null 2>&1; then
+  echo "nginx is not active — starting nginx"
+  sudo systemctl start nginx || true
+else
+  echo "nginx is active — will restart after config test"
+fi
+
+echo "Testing nginx configuration"
 if ! sudo nginx -t; then
   echo "nginx config test FAILED — showing $NGINX_CONF"
   sudo sed -n '1,200p' "$NGINX_CONF" || true
@@ -229,16 +243,16 @@ if ! sudo nginx -t; then
   exit 1
 fi
 
-echo "Reloading nginx (requires sudo)..."
-if ! sudo systemctl reload nginx; then
-  echo "nginx reload failed — printing nginx status and recent error log lines"
+echo "Restarting nginx to pick up the new configuration (requires sudo)..."
+if ! sudo systemctl restart nginx; then
+  echo "nginx restart failed — printing nginx status and recent error log lines"
   sudo systemctl status nginx --no-pager || true
   if [ -f /var/log/nginx/error.log ]; then
     echo "--- /var/log/nginx/error.log (last 50 lines) ---"
     sudo tail -n 50 /var/log/nginx/error.log || true
   fi
 else
-  echo "nginx reloaded successfully"
+  echo "nginx restarted successfully"
 fi
 
 # Optional: enable HTTPS using Let's Encrypt via certbot.

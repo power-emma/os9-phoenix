@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const port = 3000;
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // enable CORS for all routes
 app.use(cors());
@@ -21,7 +21,9 @@ const chatRouter = require('./routes/chat');
 app.use('/api/chat', chatRouter);
 console.log('Mounted routes: /api/desktop, /api/chat');
 
-// Start the server and listen on all interfaces so it is reachable by IP address
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Express server running at http://0.0.0.0:${port}/`);
+// Start the server. Default bind address is loopback (127.0.0.1) so the API
+// is not exposed directly to the internet; nginx will proxy /api/ to this port.
+const bindAddr = process.env.BIND_ADDR || '127.0.0.1';
+app.listen(port, bindAddr, () => {
+  console.log(`Express server running at http://${bindAddr}:${port}/`);
 });
