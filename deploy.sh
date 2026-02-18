@@ -155,19 +155,34 @@ fi
 # Install nginx site config for this app (serve static build and proxy /api to backend)
 NGINX_CONF="/etc/nginx/conf.d/os9_phoenix.conf"
 echo "Writing nginx config to $NGINX_CONF (requires sudo)"
-# Allow serving via the static IP and the canonical domain. Include '_' as a catch-all.
+# Before writing our site config, back up common default configs that
+# can accidentally act as the default_server and take precedence.
+for f in /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default /etc/nginx/sites-available/default; do
+  if [ -f "$f" ]; then
+    echo "Backing up existing nginx default config: $f -> ${f}.bak.${TS}"
+    sudo mv "$f" "${f}.bak.${TS}" || true
+  fi
+done
+
+# Write a clear, two-block nginx configuration:
+# 1) a minimal server that listens for www.poweremma.com and redirects to the
+#    bare domain (preserves http scheme here; certbot will create a 443 block).
+# 2) a default_server that serves poweremma.com and a catch-all underscore.
 NGINX_HOSTS="poweremma.com www.poweremma.com _"
 sudo tee "$NGINX_CONF" > /dev/null <<NGCONF
 server {
+  listen 80;
+  listen [::]:80;
+  server_name www.poweremma.com;
+
+  # Redirect www -> bare domain (explicit http; certbot will configure https redirect)
+  return 301 http://poweremma.com\$request_uri;
+}
+
+server {
   listen 80 default_server;
   listen [::]:80 default_server;
-  server_name $NGINX_HOSTS;
-
-  # Redirect requests for the www host to the canonical bare domain
-  # preserves the original scheme (http/https) so validation/redirects behave safely
-  if (\$host = 'www.poweremma.com') {
-    return 301 \$scheme://poweremma.com\$request_uri;
-  }
+  server_name poweremma.com _;
 
   # Serve the deployed directory root (matches the atomic deploy target)
   root $TARGET_DIR;
@@ -237,17 +252,6 @@ if [ "${ENABLE_HTTPS:-0}" = "1" ]; then
       echo "Installing certbot via apt-get..."
       sudo apt-get update -y || true
       sudo apt-get install -y certbot python3-certbot-nginx || true
-    elif command -v yum >/dev/null 2>&1; then
-      echo "Installing certbot via yum (Amazon Linux / RHEL/CentOS path)..."
-      # Try enabling EPEL and installing certbot from the distro repos
-      sudo yum install -y epel-release || true
-      # On Amazon Linux 2, amazon-linux-extras may be available; try it first
-      if command -v amazon-linux-extras >/dev/null 2>&1; then
-        sudo amazon-linux-extras enable epel || true
-      fi
-      sudo yum makecache fast || true
-      # Try to install python3 plugin first; fall back to certbot only if plugin isn't available
-      sudo yum install -y certbot python3-certbot-nginx || sudo yum install -y certbot || true
     elif command -v snap >/dev/null 2>&1; then
       echo "Installing certbot via snap..."
       sudo snap install core || true
@@ -255,7 +259,7 @@ if [ "${ENABLE_HTTPS:-0}" = "1" ]; then
       sudo snap install --classic certbot || true
       sudo ln -sf /snap/bin/certbot /usr/bin/certbot || true
     else
-      echo "Could not find apt-get, yum or snap to install certbot. Please install certbot manually and re-run the script with ENABLE_HTTPS=1"
+      echo "Could not find apt-get or snap to install certbot. Please install certbot manually and re-run the script with ENABLE_HTTPS=1"
       exit 1
     fi
   else
