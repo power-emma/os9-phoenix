@@ -354,6 +354,8 @@ Type=simple
 User=$CURUSER
 WorkingDirectory=$ROOT/server
 Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=BIND_ADDR=0.0.0.0
 ExecStart=/usr/bin/env npm start
 Restart=on-failure
 RestartSec=5
