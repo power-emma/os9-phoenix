@@ -172,11 +172,13 @@ else
   echo "No /var/log/nginx/error.log found"
 fi
 
-if [ -f "$LOGFILE" ]; then
-  echo "Recent API server log (last 60 lines): $LOGFILE"
-  tail -n 60 "$LOGFILE" || true
-else
-  echo "API server log $LOGFILE not found"
-fi
+echo "Deployed files (top of $TARGET_DIR):"
+sudo ls -la "$TARGET_DIR" | head -n 40 || true
+
+echo "Searching nginx configs for references to the deployed directory or proxy settings:"
+sudo grep -R "my-react-app\|/var/www/html/my-react-app\|proxy_pass\|root \|location" /etc/nginx -n || true
+
+echo "Recent API journal for $SERVICE_NAME (last 60 lines):"
+sudo journalctl -u "$SERVICE_NAME" -n 60 --no-pager || true
 
 echo "If you still see 500 errors, check the above logs and ensure nginx is configured to serve $TARGET_DIR and/or proxy to the API on port 3000."
