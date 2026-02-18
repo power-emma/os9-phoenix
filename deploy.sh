@@ -156,12 +156,18 @@ fi
 NGINX_CONF="/etc/nginx/conf.d/os9_phoenix.conf"
 echo "Writing nginx config to $NGINX_CONF (requires sudo)"
 # Allow serving via the static IP and the canonical domain. Include '_' as a catch-all.
-NGINX_HOSTS="18.190.101.255 poweremma.com www.poweremma.com _"
+NGINX_HOSTS="poweremma.com www.poweremma.com _"
 sudo tee "$NGINX_CONF" > /dev/null <<NGCONF
 server {
   listen 80 default_server;
   listen [::]:80 default_server;
   server_name $NGINX_HOSTS;
+
+  # Redirect requests for the www host to the canonical bare domain
+  # preserves the original scheme (http/https) so validation/redirects behave safely
+  if ($host = 'www.poweremma.com') {
+    return 301 $scheme://poweremma.com$request_uri;
+  }
 
   # Serve the deployed directory root (matches the atomic deploy target)
   root $TARGET_DIR;
@@ -184,7 +190,7 @@ server {
   }
 
   # Optional: serve static assets with long cache
-  location ~* \\.(?:css|js|jpg|jpeg|gif|png|svg|ico|webp|ttf|woff2?)$ {
+  location ~* \\\.(?:css|js|jpg|jpeg|gif|png|svg|ico|webp|ttf|woff2?)$ {
     try_files \$uri =404;
     access_log off;
     add_header Cache-Control "public, max-age=31536000, immutable";

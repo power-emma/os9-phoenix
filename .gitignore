@@ -11,6 +11,11 @@
 # production
 /build
 
+# Ignore local client build outputs (they are generated artifacts)
+/client/build
+/client/dist
+
+
 # misc
 .DS_Store
 .env.local
