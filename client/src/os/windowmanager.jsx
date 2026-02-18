@@ -13,6 +13,7 @@ import Orbit from '../apps/orbit/orbitbridge';
 import Raycast from '../apps/raycast/raycast';
 import Plasma from '../apps/plasma/plasma';
 import Renderer from '../apps/3d/renderer';
+import Chat from '../apps/chat/chat';
 
 // Images
 import siteIcon from './icons/portfolio.png'
@@ -20,6 +21,7 @@ import orbitIcon from './icons/orbit.png'
 import raycastIcon from './icons/raycast.png'
 import plasmaIcon from './icons/plasma.png'
 import renderIcon from './icons/renderer.png'
+import chatIcon from './icons/chat.png'
 
 
 const WM = () => {
@@ -138,31 +140,48 @@ const WM = () => {
     const [desktopConfig, setDesktopConfig] = useState(null);
 
     useEffect(() => {
-        // try to fetch a JSON config from the public folder
-        fetch('/desktop.ini').then(async (res) => {
-            if (!res.ok) return;
-            const text = await res.text();
+        // Try multiple fetch strategies to obtain desktop.ini safely.
+        // 1) try same-origin /api/desktop
+        // 2) try backend at http://localhost:3000/api/desktop (dev server)
+        // 3) fallback to static /desktop.ini
+        const tryFetch = async (url) => {
             try {
-                const parsed = JSON.parse(text);
-                if (Array.isArray(parsed)) setDesktopConfig(parsed);
-            } catch (e) {
-                // fallback: parse simple pipe-delimited lines: name|icon|script
+                const res = await fetch(url);
+                if (!res.ok) return null;
+                const contentType = (res.headers.get('content-type') || '').toLowerCase();
+                // don't accept HTML (likely index.html) as valid desktop config
+                if (contentType.includes('text/html')) return null;
+                if (contentType.includes('application/json')) {
+                    const parsed = await res.json();
+                    if (Array.isArray(parsed)) return parsed;
+                    return null;
+                }
+                // plain text
+                const text = await res.text();
                 const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
                 const parsed = lines.map(line => {
                     const parts = line.split('|').map(p => p.trim());
                     return { name: parts[0] || 'App', icon: parts[1] || '', script: parts[2] || '' };
                 });
-                setDesktopConfig(parsed);
+                return parsed;
+            } catch (e) {
+                return null;
             }
-        }).catch(() => {
-            // ignore fetch errors and fall back to defaults
-        })
+        }
+
+        (async () => {
+            let cfg = await tryFetch('/api/desktop');
+            if (!cfg) cfg = await tryFetch('http://localhost:3000/api/desktop');
+            if (!cfg) cfg = await tryFetch('/desktop.ini');
+            if (cfg) setDesktopConfig(cfg);
+        })();
     }, [])
 
     const knownApps = {
         'portfolio': (w,h) => <PortfolioMain init={{width: w, height: h}} />,
         'orbit': (w,h) => <Orbit init={{width: w, height: h}} />,
         'raycast': (w,h) => <Raycast init={{width: w, height: h}} />,
+        'chat': (w,h) => <Chat init={{width: w, height: h}} />,
         'plasma': (w,h) => <Plasma init={{width: w, height: h}} />,
         'renderer': (w,h) => <Renderer init={{width: w, height: h}} />
     };
@@ -188,7 +207,10 @@ const WM = () => {
             {name: 'Plasma', icon: plasmaIcon, script: 'plasma'},
             {name: '3D Renderer', icon: renderIcon, script: 'renderer'}
         ]).map((item, idx) => {
-            const top = 32 + (idx * 100);
+            // Allow a small padding between icon slots so icons don't sit flush
+            const iconPadding = 4; // px between icon slots
+            const iconSlot = 100 + iconPadding; // base slot height + padding
+            const top = 32 + (idx * iconSlot);
             // choose a sensible default icon based on the advertised script if no explicit icon is provided
             const scriptKey = (item.script || '').toString().toLowerCase();
             const defaultIconFor = (key) => {
@@ -200,14 +222,37 @@ const WM = () => {
                 if (key.includes('portfolio')) return siteIcon;
                 return siteIcon;
             };
-            const iconSrc = item.icon || defaultIconFor(scriptKey);
+            // allow desktop.ini to specify an icon by filename (e.g. "chat.png")
+            // map common filenames to the imported assets so the client can resolve them
+            const namedIcons = {
+                'chat.png': chatIcon,
+                'portfolio.png': siteIcon,
+                'orbit.png': orbitIcon,
+                'raycast.png': raycastIcon,
+                'plasma.png': plasmaIcon,
+                'renderer.png': renderIcon
+            };
+
+            let iconSrc;
+            if (typeof item.icon === 'string' && item.icon.length > 0) {
+                // prefer a named import if available, otherwise use the string as a path
+                iconSrc = namedIcons[item.icon] || item.icon;
+            } else if (item.icon) {
+                // item.icon might already be an imported asset
+                iconSrc = item.icon;
+            } else {
+                iconSrc = defaultIconFor(scriptKey);
+            }
             const appWidth = item.width || Math.round(practicalWidth - 40);
             const appHeight = item.height || (window.innerHeight - 60);
             // center icon and label together and use a consistent right offset unless overridden
             const rightOffset = item.rightOffset || 58;
+            // allow desktop.ini entries to specify an explicit start x/y for the window
+            const startX = (typeof item.x === 'number') ? item.x : 20;
+            const startY = (typeof item.y === 'number') ? item.y : top;
             return (
                 <button key={idx}
-                    onClick={() => { makeWindow(20, top, appHeight, appWidth, item.name, makeContentFromEntry(item, appWidth, appHeight)) }}
+                    onClick={() => { makeWindow(startX, startY, appHeight, appWidth, item.name, makeContentFromEntry(item, appWidth, appHeight)) }}
                     style={{
                         position: 'absolute',
                         top: top + 'px',
