@@ -4,6 +4,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 echo "Repo root: $ROOT"
 
+# initialize user/group defaults to avoid unbound-variable errors when script is run with sudo
+CURUSER=$(id -un 2>/dev/null || echo "root")
+WEB_GROUP=""
+
 # Build the React app (client)
 if [ ! -d "$ROOT/client" ]; then
   echo "Error: client directory not found at $ROOT/client"
