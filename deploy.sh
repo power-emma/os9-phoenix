@@ -292,6 +292,46 @@ if [ "${ENABLE_HTTPS:-0}" = "1" ]; then
   echo "Certificates obtained and nginx configured for HTTPS. certbot will set up automatic renewal."
 fi
 
+# If TLS certs exist, also provide a secure nginx listener on port 3000 that proxies
+# TLS connections to the local Node process. This is useful when browsers have HSTS
+# set for the domain and will attempt HTTPS on non-standard ports (eg :3000).
+SSL_CERT="/etc/letsencrypt/live/poweremma.com/fullchain.pem"
+SSL_KEY="/etc/letsencrypt/live/poweremma.com/privkey.pem"
+NG3000_CONF="/etc/nginx/conf.d/os9_phoenix_3000.conf"
+if [ -f "$SSL_CERT" ] && [ -f "$SSL_KEY" ]; then
+  echo "Writing nginx TLS proxy for port 3000 -> http://127.0.0.1:3000"
+  sudo tee "$NG3000_CONF" > /dev/null <<NG3
+server {
+  listen 3000 ssl;
+  listen [::]:3000 ssl;
+  server_name poweremma.com;
+
+  ssl_certificate $SSL_CERT;
+  ssl_certificate_key $SSL_KEY;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_ciphers HIGH:!aNULL:!MD5;
+
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+  }
+}
+NG3
+  echo "Testing nginx config and restarting to enable port 3000 proxy"
+  if sudo nginx -t; then
+    sudo systemctl restart nginx || true
+    echo "Port 3000 TLS proxy enabled"
+  else
+    echo "nginx config test failed after adding 3000 proxy — leaving config in $NG3000_CONF for inspection"
+    sudo sed -n '1,200p' "$NG3000_CONF" || true
+  fi
+else
+  echo "TLS certs for poweremma.com not found; skipping port 3000 TLS proxy. Run the deploy with ENABLE_HTTPS=1 to obtain certificates."
+fi
+
 # Start the API server (server/) on port 3000
 if [ ! -d "$ROOT/server" ]; then
   echo "Error: server directory not found at $ROOT/server"
