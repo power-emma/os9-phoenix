@@ -9,9 +9,11 @@ const Raycast = ({init}) => {
     const canvasRef = useRef(null)
     const backgfloorCanvasRef = useRef(null)
 
-    // Height and Width for screenDraw
-    let height = init.height
-    let width = init.width
+    // Height and Width for screenDraw (use refs so the animation loop can read updated sizes)
+    const widthRef = useRef(init.width)
+    const heightRef = useRef(init.height)
+    widthRef.current = init.width
+    heightRef.current = init.height
 
 
     // Grid of blocks for the world map
@@ -34,49 +36,49 @@ const Raycast = ({init}) => {
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
     ];
 
-    // Control Booleans
-    let leftPressed = 0;
-    let rightPressed = 0;
-    let upPressed = 0;
-    let downPressed = 0; 
+    // Control Booleans (refs)
+    const leftRef = useRef(0);
+    const rightRef = useRef(0);
+    const upRef = useRef(0);
+    const downRef = useRef(0);
 
-    // Player Position
-    let posX = 13
-    let posY = 4
-    // Player Direction
-    let dirX = -1
-    let dirY = 0
-    // Camera Direction
-    let planeX = 0
-    let planeY = 0.66
+    // Player Position (refs)
+    const posXRef = useRef(13);
+    const posYRef = useRef(4);
+    // Player Direction (refs)
+    const dirXRef = useRef(-1);
+    const dirYRef = useRef(0);
+    // Camera Direction (refs)
+    const planeXRef = useRef(0);
+    const planeYRef = useRef(0.66);
     
-    // Stores Screen Draw Data
-    let rays = []
+    // Stores Screen Draw Data (ref)
+    const raysRef = useRef([])
 
     // Control Handlers (TODO: Mobile Controls)
     const keyDownHandler = (event) => {
         if (event.code === "ArrowRight" || event.key === "d") {
-            rightPressed = 1;
+            rightRef.current = 1;
         } else if (event.code === "ArrowLeft" || event.key === "a") {
-            leftPressed = 1;
+            leftRef.current = 1;
         }
         if (event.code === "ArrowDown" || event.key === "s") {
-            downPressed = 1;
+            downRef.current = 1;
         } else if (event.code === "ArrowUp" || event.key === "w") {
-            upPressed = 1;
+            upRef.current = 1;
         }
     }
 
     const keyUpHandler = (event) => {
         if (event.code === "ArrowRight" || event.key === "d") {
-            rightPressed = 0;
+            rightRef.current = 0;
         } else if (event.code === "ArrowLeft" || event.key === "a") {
-            leftPressed = 0;
+            leftRef.current = 0;
         }
         if (event.code === "ArrowDown" || event.key === "s") {
-            downPressed = 0;
+            downRef.current = 0;
         } else if (event.code === "ArrowUp" || event.key === "w") {
-            upPressed = 0;
+            upRef.current = 0;
         }
     }
 
@@ -91,43 +93,43 @@ const Raycast = ({init}) => {
     // Apply movement and rotation based on control input every frame
     const controls = () => {
         let rotSpeed = 0.03;
-		let moveSpeed = 0.04;
+        let moveSpeed = 0.04;
 
-		if (leftPressed) {
-			let oldDirX = dirX;
-			dirX = dirX * Math.cos(rotSpeed) - dirY * Math.sin(rotSpeed);
-			dirY = oldDirX * Math.sin(rotSpeed) + dirY * Math.cos(rotSpeed);
+        if (leftRef.current) {
+            let oldDirX = dirXRef.current;
+            dirXRef.current = dirXRef.current * Math.cos(rotSpeed) - dirYRef.current * Math.sin(rotSpeed);
+            dirYRef.current = oldDirX * Math.sin(rotSpeed) + dirYRef.current * Math.cos(rotSpeed);
 
-			let oldPlaneX = planeX;
-			planeX = planeX * Math.cos(rotSpeed) - planeY * Math.sin(rotSpeed);
-			planeY = oldPlaneX * Math.sin(rotSpeed) + planeY * Math.cos(rotSpeed);
-		}
-		if (rightPressed) {
-			let oldDirX = dirX;
-			dirX = dirX * Math.cos(-rotSpeed) - dirY * Math.sin(-rotSpeed);
-			dirY = oldDirX * Math.sin(-rotSpeed) + dirY * Math.cos(-rotSpeed);
+            let oldPlaneX = planeXRef.current;
+            planeXRef.current = planeXRef.current * Math.cos(rotSpeed) - planeYRef.current * Math.sin(rotSpeed);
+            planeYRef.current = oldPlaneX * Math.sin(rotSpeed) + planeYRef.current * Math.cos(rotSpeed);
+        }
+        if (rightRef.current) {
+            let oldDirX = dirXRef.current;
+            dirXRef.current = dirXRef.current * Math.cos(-rotSpeed) - dirYRef.current * Math.sin(-rotSpeed);
+            dirYRef.current = oldDirX * Math.sin(-rotSpeed) + dirYRef.current * Math.cos(-rotSpeed);
 
-			let oldPlaneX = planeX;
-			planeX = planeX * Math.cos(-rotSpeed) - planeY * Math.sin(-rotSpeed);
-			planeY = oldPlaneX * Math.sin(-rotSpeed) + planeY * Math.cos(-rotSpeed);
-		}
+            let oldPlaneX = planeXRef.current;
+            planeXRef.current = planeXRef.current * Math.cos(-rotSpeed) - planeYRef.current * Math.sin(-rotSpeed);
+            planeYRef.current = oldPlaneX * Math.sin(-rotSpeed) + planeYRef.current * Math.cos(-rotSpeed);
+        }
 
-		if (upPressed) {
-			if (worldMap[intCast(posX + dirX * moveSpeed)][intCast(posY)] == 0) {
-				posX = posX + (dirX * moveSpeed)
-			}
-			if (worldMap[intCast(posX)][intCast(posY + dirY * moveSpeed)] == 0) {
-				posY = posY + (dirY * moveSpeed)
-			}
-		}
-		if (downPressed) {
-			if (worldMap[intCast(posX - dirX * moveSpeed)][intCast(posY)] == 0) {
-				posX = posX - (dirX * moveSpeed)
-			}
-			if (worldMap[intCast(posX)][intCast(posY - dirY * moveSpeed)] == 0) {
-				posY = posY - (dirY * moveSpeed)
-			}
-		}
+        if (upRef.current) {
+            if (worldMap[intCast(posXRef.current + dirXRef.current * moveSpeed)][intCast(posYRef.current)] == 0) {
+                posXRef.current = posXRef.current + (dirXRef.current * moveSpeed)
+            }
+            if (worldMap[intCast(posXRef.current)][intCast(posYRef.current + dirYRef.current * moveSpeed)] == 0) {
+                posYRef.current = posYRef.current + (dirYRef.current * moveSpeed)
+            }
+        }
+        if (downRef.current) {
+            if (worldMap[intCast(posXRef.current - dirXRef.current * moveSpeed)][intCast(posYRef.current)] == 0) {
+                posXRef.current = posXRef.current - (dirXRef.current * moveSpeed)
+            }
+            if (worldMap[intCast(posXRef.current)][intCast(posYRef.current - dirYRef.current * moveSpeed)] == 0) {
+                posYRef.current = posYRef.current - (dirYRef.current * moveSpeed)
+            }
+        }
 
     }
 
@@ -136,7 +138,7 @@ const Raycast = ({init}) => {
         // Store the Rays
         let tempRays = []
 
-        for (let x = 0; x < width; x++) {
+    for (let x = 0; x < widthRef.current; x++) {
             // Temp Variables
             let sideDistX = 0.0
             let sideDistY = 0.0
@@ -147,13 +149,13 @@ const Raycast = ({init}) => {
             let side = 0
 
             // Get Ray Start Position
-            let mapX = intCast(posX)
-            let mapY = intCast(posY)
+            let mapX = intCast(posXRef.current)
+            let mapY = intCast(posYRef.current)
 
             // Find where the ray is going
-            let cameraX = ((2 * x) / (width)) - 1
-            let rayDirX = dirX + (planeX * cameraX)
-            let rayDirY = dirY + (planeY * cameraX)
+            let cameraX = ((2 * x) / (widthRef.current)) - 1
+            let rayDirX = dirXRef.current + (planeXRef.current * cameraX)
+            let rayDirY = dirYRef.current + (planeYRef.current * cameraX)
 
             // Find length of grid step
             let deltaDistX = Math.abs(1 / rayDirX)
@@ -162,17 +164,17 @@ const Raycast = ({init}) => {
             // Caculate step direction and sideDist (distance to next line on grid)
             if (rayDirX < 0) {
                 stepX = -1
-                sideDistX = (posX - mapX) * deltaDistX
+                sideDistX = (posXRef.current - mapX) * deltaDistX
             } else {
                 stepX = 1
-                sideDistX = (mapX + 1.0 - posX) * deltaDistX
+                sideDistX = (mapX + 1.0 - posXRef.current) * deltaDistX
             }
             if (rayDirY < 0) {
                 stepY = -1
-                sideDistY = (posY - mapY) * deltaDistY
+                sideDistY = (posYRef.current - mapY) * deltaDistY
             } else {
                 stepY = 1
-                sideDistY = (mapY + 1.0 - posY) * deltaDistY
+                sideDistY = (mapY + 1.0 - posYRef.current) * deltaDistY
             }
             
             // Loop through and jump squares until you hit one
@@ -195,26 +197,26 @@ const Raycast = ({init}) => {
 			}
 
 			// Remove fisheye effect (something something distortion pattern)
-			if (side === 0) {
-				perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
-			} else {
-				perpWallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
-			}
+            if (side === 0) {
+                perpWallDist = (mapX - posXRef.current + (1 - stepX) / 2) / rayDirX;
+            } else {
+                perpWallDist = (mapY - posYRef.current + (1 - stepY) / 2) / rayDirY;
+            }
 
 
             // Make line size to draw on screen
-			let lineHeight = Math.floor(height / perpWallDist);
+            let lineHeight = Math.floor(heightRef.current / perpWallDist);
 
             // Y coordinates of this line for screenDraw()
-            let drawStart = Math.floor((-lineHeight / 2 + height / 2) - 10)
-			let drawEnd = Math.floor((lineHeight / 2 + height / 2) + 10)
+            let drawStart = Math.floor((-lineHeight / 2 + heightRef.current / 2) - 10)
+            let drawEnd = Math.floor((lineHeight / 2 + heightRef.current / 2) + 10)
 
             // Max line size
 			if (drawStart < 0) {
 				drawStart = 0;
 			}
-			if (drawEnd > height) {
-				drawEnd = height;
+            if (drawEnd > heightRef.current) {
+                drawEnd = heightRef.current;
 			}   
 
             // Paramaters for screenDraw()
@@ -229,7 +231,7 @@ const Raycast = ({init}) => {
         }
 
         // Make them not temporary
-        rays = tempRays
+        raysRef.current = tempRays
     }
 
     // Draws the results of raycast to screen
@@ -237,6 +239,7 @@ const Raycast = ({init}) => {
         // Screen Blank
         ctx.clearRect(0,0, ctx.canvas.width, ctx.canvas.height);
         // Draw Lines
+        const rays = raysRef.current;
         for (let i = 0; i < rays.length; i++) {
             ctx.beginPath();
             // Initalize colour values
@@ -328,14 +331,38 @@ const Raycast = ({init}) => {
         // Start main loop
         render()
 
+        // Cleanup when effect unmounts
+        return () => {
+            document.removeEventListener("keydown", keyDownHandler);
+            document.removeEventListener("keyup", keyUpHandler);
+            if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
+        }
+
     }, [])
+
+    // When the virtual window size changes, update canvas backing store and redraw background
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const backgfloorCanvas = backgfloorCanvasRef.current;
+        if (!canvas || !backgfloorCanvas) return;
+        const ctx = canvas.getContext('2d');
+        const bgctx = backgfloorCanvas.getContext('2d');
+        // update backing pixel dimensions
+        canvas.width = widthRef.current;
+        canvas.height = heightRef.current;
+        backgfloorCanvas.width = widthRef.current;
+        backgfloorCanvas.height = heightRef.current;
+        // redraw background
+        bgctx.fillStyle = '#FFFFFF';
+        bgctx.fillRect(0, 0, backgfloorCanvas.width, backgfloorCanvas.height);
+    }, [init && init.width, init && init.height]);
     
 
     // Simple HTML
     return(
         <div style={{width: "100%", height: "100%", position: "relative"}}>
-            <canvas ref={backgfloorCanvasRef} width={width} height={height} style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>
-            <canvas ref={canvasRef} width={width} height={height}  style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>
+            <canvas ref={backgfloorCanvasRef} width={init.width} height={init.height} style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>
+            <canvas ref={canvasRef} width={init.width} height={init.height}  style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>
         </div>
     )
 

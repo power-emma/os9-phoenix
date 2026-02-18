@@ -209,7 +209,16 @@ const Window = ({init, closeFunction }) => {
                 </div>
             </strong>
             <div style = {{display: "flex", height: "100%", width:"100%", overflow: "auto"}}>
-                {content}
+                {
+                    // If content is a valid React element, clone it and inject updated init width/height
+                    (React.isValidElement(content)) ? React.cloneElement(content, { init: {
+                        // preserve other init fields if present
+                        ...(content.props && content.props.init ? content.props.init : {}),
+                        width: size.width,
+                        height: size.height,
+                        mobile: init.mobile
+                    }}) : content
+                }
             </div>
 
             {}

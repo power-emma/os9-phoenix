@@ -125,64 +125,119 @@ const WM = () => {
       }, [])
     
     // Desktop Icon Tect
-    const iconTextStyle = {backgroundColor: "rgb(204, 204, 204)", 
-        fontSize: "14pt", 
-        paddingLeft: "4px", 
-        paddingRight: "4px", 
-        textAlign: "center"
+    // base text style for desktop icon labels; the visible background is applied to the label element
+    const iconTextStyle = {
+        fontSize: '14pt',
+        textAlign: 'center'
     }
 
     // Define the desktop icons, and the initial parameters of the apps they run
+    // desktop configuration can be provided via a JSON file at `/desktop.ini` (served from public/)
+    // Format: JSON array of entries: [{"name":"Orbit.js","icon":"/path/to/icon.png","script":"orbit","width":<px>,"height":<px>}]
+    // `script` may be a known app id (portfolio, orbit, raycast, plasma, renderer) or a URL (starts with http/ or /) to open in an iframe.
+    const [desktopConfig, setDesktopConfig] = useState(null);
+
+    useEffect(() => {
+        // try to fetch a JSON config from the public folder
+        fetch('/desktop.ini').then(async (res) => {
+            if (!res.ok) return;
+            const text = await res.text();
+            try {
+                const parsed = JSON.parse(text);
+                if (Array.isArray(parsed)) setDesktopConfig(parsed);
+            } catch (e) {
+                // fallback: parse simple pipe-delimited lines: name|icon|script
+                const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+                const parsed = lines.map(line => {
+                    const parts = line.split('|').map(p => p.trim());
+                    return { name: parts[0] || 'App', icon: parts[1] || '', script: parts[2] || '' };
+                });
+                setDesktopConfig(parsed);
+            }
+        }).catch(() => {
+            // ignore fetch errors and fall back to defaults
+        })
+    }, [])
+
+    const knownApps = {
+        'portfolio': (w,h) => <PortfolioMain init={{width: w, height: h}} />,
+        'orbit': (w,h) => <Orbit init={{width: w, height: h}} />,
+        'raycast': (w,h) => <Raycast init={{width: w, height: h}} />,
+        'plasma': (w,h) => <Plasma init={{width: w, height: h}} />,
+        'renderer': (w,h) => <Renderer init={{width: w, height: h}} />
+    };
+
+    const makeContentFromEntry = (entry, w, h) => {
+        if (!entry) return null;
+        const script = (entry.script || '').toString();
+        const key = script.toLowerCase();
+        if (knownApps[key]) return knownApps[key](w,h);
+        // if script looks like a URL or path, render in an iframe
+        if (script.startsWith('/') || script.startsWith('http')) {
+            return <iframe src={script} style={{width: '100%', height: '100%', border: 'none'}} title={entry.name} />
+        }
+        // fallback: if script matches a filename under /apps, try dynamic import - else null
+        return null;
+    }
+
     const desktopIcons = <div className="justify-content-center" style={{float: "right", marginRight: "200px", marginTop: "16px"}}>
-        <button onClick={() =>{makeWindow(20, 32, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", 
-            <PortfolioMain init = {{
-                height: window.innerHeight - 60,
-                width: practicalWidth - 40
-            }}
-        />)}}
-        style={{position: "absolute", top: "32px", right: "18px", border: "none", background: "none"}} >
-            <img src={siteIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
-            <h4 style={iconTextStyle}>Emma's Website</h4>
-        </button>
-
-        <button onClick={() =>{makeWindow(20, 32, window.innerHeight - 60, practicalWidth/ 1.25, "orbit.js", 
-            <Orbit init = {{
-                height: window.innerHeight - 60,
-                width: practicalWidth / 1.25
-            }}
-        />)}} 
-        style={{position: "absolute", top: "132px", right: "58px", border: "none", background: "none"}} >
-            <img src={orbitIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
-            <h4 style={iconTextStyle}>Orbit.js</h4>
-        </button>
-
-        <button onClick={() =>{makeWindow(20, 32, window.innerHeight - 60, practicalWidth - 40, "Raycast Engine", 
-            <Raycast init = {{
-            height: window.innerHeight - 60,
-            width: practicalWidth - 40
-            }}/>
-        )} } style={{position: "absolute", top: "232px", right: "58px", border: "none", background: "none"}} >
-            <img src={raycastIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
-            <h4 style={iconTextStyle}>Raycast</h4>
-        </button>
-        
-        <button onClick={() =>{
-        makeWindow(20, 24, window.innerHeight - 60, practicalWidth - 40, "Plasma Demo", <Plasma init = {{
-            height: window.innerHeight - 60,
-            width: practicalWidth - 40
-        }}/>)} } style={{position: "absolute", top: "332px", right: "58px", border: "none", background: "none"}} >
-            <img src={plasmaIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
-            <h4 style={iconTextStyle}>Plasma</h4>
-        </button>
-
-        <button onClick={() =>{
-        makeWindow(20, 24, window.innerHeight - 60, practicalWidth - 40, "3D Renderer", <Renderer init = {{
-            height: window.innerHeight - 60,
-            width: practicalWidth - 40
-        }}/>)} } style={{position: "absolute", top: "432px", right: "34px", border: "none", background: "none"}} >
-            <img src={renderIcon} style={{height: "64px", imageRendering: "pixelated"}}></img>
-            <h4 style={iconTextStyle}>3D Renderer</h4>
-        </button>
+        { (desktopConfig || [
+            {name: "Emma's Website", icon: siteIcon, script: 'portfolio'},
+            {name: 'Orbit.js', icon: orbitIcon, script: 'orbit'},
+            {name: 'Raycast', icon: raycastIcon, script: 'raycast'},
+            {name: 'Plasma', icon: plasmaIcon, script: 'plasma'},
+            {name: '3D Renderer', icon: renderIcon, script: 'renderer'}
+        ]).map((item, idx) => {
+            const top = 32 + (idx * 100);
+            // choose a sensible default icon based on the advertised script if no explicit icon is provided
+            const scriptKey = (item.script || '').toString().toLowerCase();
+            const defaultIconFor = (key) => {
+                if (!key) return siteIcon;
+                if (key.includes('orbit')) return orbitIcon;
+                if (key.includes('raycast')) return raycastIcon;
+                if (key.includes('plasma')) return plasmaIcon;
+                if (key.includes('render')) return renderIcon;
+                if (key.includes('portfolio')) return siteIcon;
+                return siteIcon;
+            };
+            const iconSrc = item.icon || defaultIconFor(scriptKey);
+            const appWidth = item.width || Math.round(practicalWidth - 40);
+            const appHeight = item.height || (window.innerHeight - 60);
+            // center icon and label together and use a consistent right offset unless overridden
+            const rightOffset = item.rightOffset || 58;
+            return (
+                <button key={idx}
+                    onClick={() => { makeWindow(20, top, appHeight, appWidth, item.name, makeContentFromEntry(item, appWidth, appHeight)) }}
+                    style={{
+                        position: 'absolute',
+                        top: top + 'px',
+                        right: rightOffset + 'px',
+                        border: 'none',
+                        background: 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        width: '220px',
+                        padding: '6px',
+                        textAlign: 'center'
+                    }}>
+                    <img src={iconSrc} style={{height: '64px', margin: '0 auto 6px', imageRendering: 'pixelated', display: 'block'}} alt={item.name}></img>
+                    <h4
+                        title={item.name}
+                        style={{
+                            ...iconTextStyle,
+                            margin: 0,
+                            boxSizing: 'border-box',
+                            whiteSpace: 'nowrap',
+                            display: 'inline-block',
+                            backgroundColor: 'rgb(204, 204, 204)',
+                            padding: '4px 8px',
+                            borderRadius: '0px'
+                        }}
+                    >{item.name}</h4>
+                </button>
+            )
+        }) }
     </div>
 
 

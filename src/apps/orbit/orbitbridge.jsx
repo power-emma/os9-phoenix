@@ -34,29 +34,29 @@ const Orbit = ({init}) => {
   let width = init.width
 
   // Where to center camera
-  let camX = 0;
-  let camY = 0;
+  // Use refs so these persist across React re-renders
+  const camXRef = useRef(0);
+  const camYRef = useRef(0);
 
   // Where to paint on screen as to be centered with reference
-  let adjX = 0;
-  let adjY = 0;
+  const adjXRef = useRef(0);
+  const adjYRef = useRef(0);
 
-  // Array of all bodies in the system
-  let bodies = [];
+  // Array of all bodies in the system (persisted)
+  const bodiesRef = useRef([]);
 
   // The simulation will run at this many times faster
-  let timeMultiplier = 10000;
+  const timeMultiplierRef = useRef(10000);
 
 
   // Amount to zoom out (meters)
-  let zoom = 2000000000;
-
+  const zoomRef = useRef(2000000000);
   // Amount to adjust screen draw by
-  let zoomMultiplier = 1/zoom;
+  const zoomMultiplierRef = useRef(1 / zoomRef.current);
 
   // Last position for background drawing
-  let lastCamX = camX;
-  let lastCamY = camY;
+  const lastCamXRef = useRef(camXRef.current);
+  const lastCamYRef = useRef(camYRef.current);
 
   /*
       Given 2 bodies (b1 and b2) this function
@@ -70,8 +70,8 @@ const Orbit = ({init}) => {
     // Vectors :(
     // F = magnitude
     // Find the distance between b1 and b2
-    let b1x = b1.posX - b2.posX;
-    let b1y = b1.posY - b2.posY;
+  let b1x = b1.posX - b2.posX;
+  let b1y = b1.posY - b2.posY;
     // cos theta = (X / Magnitude of b1)
     // Angle between 2 vectors where one of the vectors is b1 and the other is the x axis vector
     let cosAngle = (b1x) / (Math.sqrt((b1x**2) + (b1y**2)));
@@ -89,8 +89,8 @@ const Orbit = ({init}) => {
 
     // V = F/(M * t)
     // Find velocity given force
-    let vx1 = (dx / (b1.mass * 1)) * timeMultiplier;
-    let vy1 = (dy / (b1.mass * 1)) * timeMultiplier;
+  let vx1 = (dx / (b1.mass * 1)) * timeMultiplierRef.current;
+  let vy1 = (dy / (b1.mass * 1)) * timeMultiplierRef.current;
 
     // Apply appropriate signs as only magnitude was known
     if(angle > (Math.PI) * 3/2) {
@@ -134,54 +134,48 @@ const Orbit = ({init}) => {
 
   // Apply orbit calculation to every possible pair of bodies
   const updateBodies = () => {
-    // Calculate the gravitational force vector for each combination of bodies
-    for (let i = 0; i < bodies.length; i++) {
-        for (let j = 0; j < bodies.length; j++) {
-            if (j != i && bodies[i].static != true) {
-                orbit(bodies[i], bodies[j]);
-            }
-        }
-    }
-  
-    // Apply the velocity for the desired amount of time
-    for(let i = 0; i < bodies.length; i++) {
-        let temp = bodies[i];
-        temp.posX += (temp.speedX * timeMultiplier);
-        temp.posY += (temp.speedY * timeMultiplier);
+  const bodies = bodiesRef.current;
+  // Calculate the gravitational force vector for each combination of bodies
+  for (let i = 0; i < bodies.length; i++) {
+    for (let j = 0; j < bodies.length; j++) {
+      if (j !== i && bodies[i].static !== true) {
+        orbit(bodies[i], bodies[j]);
+      }
     }
   }
 
-  // Initial Solar System model
-  bodies.push(makeBody("Sun", 6, 1, 100000, 0, 0, sciNotation(1.989,30), "#ffc400").body);
-  bodies.push(makeBody("Mercury", 3, 58000000000, 0, 0, 47400, sciNotation(3.285,23), "#a1a1a1").body);
-  bodies.push(makeBody("Venus", 4, 108030000000, 0, 0, 35000, sciNotation(4.867,24), "#d68006").body);
-  bodies.push(makeBody("Earth", 4, 149000000000, 0, 0, 29800, sciNotation(5.97,24), "#0022cf").body);
-  bodies.push(makeBody("Mars", 3, 228000000000, 0, 0, 24100, sciNotation(6.42,23), "#ffae78").body);
-  bodies.push(makeBody("Jupiter", 5, 778500000000, 0, 0, 13100, sciNotation(1898,24), "#ff771c").body);
-  bodies.push(makeBody("Saturn", 5, 1432000000000, 0, 0, 9700, sciNotation(568,24), "#edd86d").body);
-  bodies.push(makeBody("Uranus", 4, 2867000000000, 0, 0, 6800, sciNotation(86.8,24), "#b3f0fc").body);
-  bodies.push(makeBody("Neptune", 4, 4515000000000, 0, 0, 5400, sciNotation(102,24), "#5094fa").body);
+  // Apply the velocity for the desired amount of time
+  for (let i = 0; i < bodies.length; i++) {
+    let temp = bodies[i];
+    temp.posX += (temp.speedX * timeMultiplierRef.current);
+    temp.posY += (temp.speedY * timeMultiplierRef.current);
+  }
+  }
 
-  // Camera will center on the first body
-  let referenceBody = bodies[0];
+  // Camera will center on the first body (ref)
+  const referenceBodyRef = useRef(null);
 
 
   const screenDraw = (ctx, bctx) => {
     //Update camera based on reference point
-    camX = referenceBody.posX;
-    camY = referenceBody.posY;
+    const referenceBody = referenceBodyRef.current;
+    if (referenceBody) {
+      camXRef.current = referenceBody.posX;
+      camYRef.current = referenceBody.posY;
+    }
     //Clear Screen
     ctx.clearRect(0,0, ctx.canvas.width, ctx.canvas.height);
 
-    for(let i = 0; i < bodies.length; i++) {
-        // Current object
-        let temp = bodies[i];
+  const bodies = bodiesRef.current;
+  for(let i = 0; i < bodies.length; i++) {
+    // Current object
+    let temp = bodies[i];
         // Needed for every object
         ctx.beginPath();
         // X, Y, Radius, Start (radians), End (radians)
         // Takes into account the zoom and the cameras current position
-        ctx.arc(((temp.posX - camX) * zoomMultiplier) + adjX,
-          ((temp.posY - camY) * zoomMultiplier) + adjY,
+        ctx.arc(((temp.posX - camXRef.current) * zoomMultiplierRef.current) + adjXRef.current,
+          ((temp.posY - camYRef.current) * zoomMultiplierRef.current) + adjYRef.current,
           temp.radius,
           0, 
           2 * Math.PI);
@@ -192,11 +186,11 @@ const Orbit = ({init}) => {
         ctx.stroke();
 
         // Needed for every line
-        bctx.beginPath();
-        // Start line at the previous position taking into account the position of the previous camera
-        bctx.moveTo(((temp.lastPosX - lastCamX) * zoomMultiplier) + adjX, ((temp.lastPosY - lastCamY) * zoomMultiplier) + adjY);
-        // Bring line to the current position taking into account the current camera position
-        bctx.lineTo(((temp.posX - camX) * zoomMultiplier) + adjX, ((temp.posY - camY) * zoomMultiplier) + adjY);
+  bctx.beginPath();
+  // Start line at the previous position taking into account the position of the previous camera
+  bctx.moveTo(((temp.lastPosX - lastCamXRef.current) * zoomMultiplierRef.current) + adjXRef.current, ((temp.lastPosY - lastCamYRef.current) * zoomMultiplierRef.current) + adjYRef.current);
+  // Bring line to the current position taking into account the current camera position
+  bctx.lineTo(((temp.posX - camXRef.current) * zoomMultiplierRef.current) + adjXRef.current, ((temp.posY - camYRef.current) * zoomMultiplierRef.current) + adjYRef.current);
         // Canvas
         bctx.strokeStyle = temp.colour;
         bctx.stroke();
@@ -211,13 +205,14 @@ const Orbit = ({init}) => {
 
     }
     //Remember current camera position for next time
-    lastCamX = camX;
-    lastCamY = camY;
+    lastCamXRef.current = camXRef.current;
+    lastCamYRef.current = camYRef.current;
   }
 
   // Reset Button
   const clearScreen = () => {
-    bodies = []
+    bodiesRef.current = [];
+    referenceBodyRef.current = null;
   }
 
   const spawnPlanet = (e) => {
@@ -232,20 +227,21 @@ const Orbit = ({init}) => {
     let divY = mouseY - divRect.top;
     
     // if array is cleared then set camera to origin
-    if(bodies.length == 0) {
-      camX = 0
-      camY = 0
+    const bodies = bodiesRef.current;
+    if (bodies.length == 0) {
+      camXRef.current = 0;
+      camYRef.current = 0;
     }
 
     // Solve Screen Draw Routine for worldX instead of screenX
-    let worldX = ((divX - adjX )/zoomMultiplier) + camX
-    let worldY = ((divY - adjY )/zoomMultiplier) + camY
+  let worldX = ((divX - adjXRef.current )/zoomMultiplierRef.current) + camXRef.current
+  let worldY = ((divY - adjYRef.current )/zoomMultiplierRef.current) + camYRef.current
 
     // Generates random hex code for colour
     const tempColour = Math.floor(Math.random() * 16777216).toString(16);
     
     // Make and add the body
-    bodies.push(makeBody("X", 3, worldX, worldY, 0, 0, sciNotation(3.285,30), "#" + tempColour).body);
+    bodiesRef.current.push(makeBody("X", 3, worldX, worldY, 0, 0, sciNotation(3.285,30), "#" + tempColour).body);
   }
 
   // Blank Array useEffect means this code only runs at startup
@@ -256,16 +252,50 @@ const Orbit = ({init}) => {
     const context = canvas.getContext('2d')
     const backgroundContext = backgroundCanvas.getContext('2d')
 
-    // Set Center of canvas
-    adjX = context.canvas.width/2
-    adjY = context.canvas.height/2
+    // If possible, size the canvases to the container's current size
+    const resizeCanvases = () => {
+      if (!orbitRef.current) return;
+      const rect = orbitRef.current.getBoundingClientRect();
+      const newWidth = Math.max(1, Math.floor(rect.width));
+      const newHeight = Math.max(1, Math.floor(rect.height));
+      // update canvas pixel dimensions to match display size
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      backgroundCanvas.width = newWidth;
+      backgroundCanvas.height = newHeight;
+      // update drawing offsets
+      adjXRef.current = newWidth / 2;
+      adjYRef.current = newHeight / 2;
+      // Reset camera centering so the view remains centered in the new window
+      if (referenceBodyRef.current) {
+        camXRef.current = referenceBodyRef.current.posX;
+        camYRef.current = referenceBodyRef.current.posY;
+        lastCamXRef.current = camXRef.current;
+        lastCamYRef.current = camYRef.current;
+      }
+      // clear and redraw background
+      backgroundContext.fillStyle = '#FFFFFF';
+      backgroundContext.fillRect(0, 0, newWidth, newHeight);
+    }
+
+  // Initialize bodies (do this once on mount)
+  bodiesRef.current = [];
+  bodiesRef.current.push(makeBody("Sun", 6, 1, 100000, 0, 0, sciNotation(1.989,30), "#ffc400").body);
+  bodiesRef.current.push(makeBody("Mercury", 3, 58000000000, 0, 0, 47400, sciNotation(3.285,23), "#a1a1a1").body);
+  bodiesRef.current.push(makeBody("Venus", 4, 108030000000, 0, 0, 35000, sciNotation(4.867,24), "#d68006").body);
+  bodiesRef.current.push(makeBody("Earth", 4, 149000000000, 0, 0, 29800, sciNotation(5.97,24), "#0022cf").body);
+  bodiesRef.current.push(makeBody("Mars", 3, 228000000000, 0, 0, 24100, sciNotation(6.42,23), "#ffae78").body);
+  bodiesRef.current.push(makeBody("Jupiter", 5, 778500000000, 0, 0, 13100, sciNotation(1898,24), "#ff771c").body);
+  bodiesRef.current.push(makeBody("Saturn", 5, 1432000000000, 0, 0, 9700, sciNotation(568,24), "#edd86d").body);
+  bodiesRef.current.push(makeBody("Uranus", 4, 2867000000000, 0, 0, 6800, sciNotation(86.8,24), "#b3f0fc").body);
+  bodiesRef.current.push(makeBody("Neptune", 4, 4515000000000, 0, 0, 5400, sciNotation(102,24), "#5094fa").body);
+  referenceBodyRef.current = bodiesRef.current[0];
+
+  // Initial sizing
+  resizeCanvases();
 
     // Define frameID for use with constant render
     let animationFrameId;
-
-    // Make background White
-    backgroundContext.fillStyle = '#FFFFFF'
-    backgroundContext.fillRect(0,0, context.canvas.width, context.canvas.height);
 
     // Main loop
     const render = () => {
@@ -277,10 +307,49 @@ const Orbit = ({init}) => {
       animationFrameId = window.requestAnimationFrame(render)
     }
 
-    // Initial call to main loop
-    render()
+    // Listen for window resizes and update canvases
+    const handleResize = () => {
+      resizeCanvases();
+    }
+    window.addEventListener('resize', handleResize)
+
+      // Initial call to main loop
+      render()
+
+      // Cleanup on unmount
+      return () => {
+        window.removeEventListener('resize', handleResize)
+        if (animationFrameId) window.cancelAnimationFrame(animationFrameId)
+      }
+
 
   }, [])
+
+  // If the parent (virtual window) changes size, update canvas to match
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const backgroundCanvas = backgroundCanvasRef.current;
+    if (!canvas || !backgroundCanvas || !orbitRef.current) return;
+    const rect = orbitRef.current.getBoundingClientRect();
+    const newWidth = Math.max(1, Math.floor(rect.width));
+    const newHeight = Math.max(1, Math.floor(rect.height));
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+    backgroundCanvas.width = newWidth;
+    backgroundCanvas.height = newHeight;
+    adjXRef.current = newWidth / 2;
+    adjYRef.current = newHeight / 2;
+    // Reset camera centering so the view remains centered in the new window
+    if (referenceBodyRef.current) {
+      camXRef.current = referenceBodyRef.current.posX;
+      camYRef.current = referenceBodyRef.current.posY;
+      lastCamXRef.current = camXRef.current;
+      lastCamYRef.current = camYRef.current;
+    }
+    const backgroundContext = backgroundCanvas.getContext('2d');
+    backgroundContext.fillStyle = '#FFFFFF';
+    backgroundContext.fillRect(0, 0, newWidth, newHeight);
+  }, [init && init.width, init && init.height]);
 
   // Dense HTML
   return (<div style={{width: "100%", height: "100%", position: "relative"}}>

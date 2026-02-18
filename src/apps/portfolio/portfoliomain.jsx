@@ -14,28 +14,29 @@ const PortfolioMain = ({init}) => {
     let height = init.height
     let width = init.width
 
-    // How many ems should text be
-    let em = width/1000 
-    if (height/800 < em) {
-        em = height/800
-    }
+    // How many ems should text be - compute a responsive base and clamp it
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v))
+    // base is proportional to viewport but clamped to sensible ranges
+    let em = clamp(Math.min(width / 1000, height / 800), 0.7, 1.6)
 
     // Desktop PAdding
     let defaultPadding = "2vh"
 
     let mobile = false
-    if (height > width && width < 700   ) {
+    if (height > width && width < 700) {
         mobile = true
-        em = height/1200
-        defaultPadding = "6vh"
+        // make mobile fonts a bit smaller but still clamped
+        em = clamp(Math.min(width / 450, height / 1200), 0.6, 1.1)
+        defaultPadding = "5vh"
     }
 
     // Get size dependent font sizes
-    let imgHeight = height/1.5 + "px"
-    let headerSize = 2*em + "em"
-    let h1Size = 4*em + "em"
-    let h2Size = 3*em + "em"
-    let heropSize = 1.5*em + "em"
+    // Prefer CSS-driven scaling for many things; compute a few fallbacks
+    let imgHeight = Math.round(height / (mobile ? 2.6 : 1.5)) + "px"
+    let headerSize = (2 * em) + "em"
+    let h1Size = (3.6 * em) + "em"
+    let h2Size = (2.6 * em) + "em"
+    let heropSize = (1.25 * em) + "em"
 
     // Store page elements as state
     const [currentPage, setCurrentPage] = useState(<div></div>);
@@ -100,9 +101,9 @@ const PortfolioMain = ({init}) => {
         // If on desktop the photo should be inline with the hero text
         if (! mobile) {
             emmaPhoto = <div className = "col-sm-6 d-flex justify-content-center align-items-center" >
-            <img className="gradImgBorder" src={emma} style={{height: imgHeight, imageRendering: "auto"}}/>
+            <img className="gradImgBorder" src={emma} style={{maxWidth: "100%", height: "auto", maxHeight: imgHeight, imageRendering: "auto"}}/>
         </div>
-        emmaPhotoMobile = <div>
+            emmaPhotoMobile = <div>
             <div className = "h-100 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", paddingTop: "5vh"}}>
                 <img src={null} style={{imageRendering: "auto"}}/>
             </div>
@@ -113,7 +114,7 @@ const PortfolioMain = ({init}) => {
             emmaPhotoMobile = <div>
             <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", paddingTop: "5vh"}}>
 
-                <img className="gradImgBorder" src={emma} style={{height: imgHeight, imageRendering: "auto"}}/>
+                <img className="gradImgBorder" src={emma} style={{maxWidth: "85%", height: "auto", maxHeight: imgHeight, imageRendering: "auto"}}/>
                 </div>
             </div>
         }
@@ -396,8 +397,8 @@ const PortfolioMain = ({init}) => {
     ];
     const [activePics, setActivePics] = useState([<div classname = 'q'><RowsPhotoAlbum
         photos={favPics}
-        // Scales well to vertical and horizontal
-        targetRowHeight={30 + (width/Math.log(16, width * 1.5))}
+        // use a bounded target height so rows don't become tiny on mobile or huge on desktop
+        targetRowHeight={Math.max(80, Math.min(220, Math.round(width / 10)))}
         withLightbox={true}
     /></div>]);
 
@@ -417,8 +418,8 @@ const PortfolioMain = ({init}) => {
         const changePics = (arr,name,desc) => {
             let newA = [<div classname = 'q'><RowsPhotoAlbum
                 photos={arr}
-                // Scales well to vertical and horizontal
-                targetRowHeight={30 + (width/Math.log(16, width * 1.5))}
+                // bounded row height for responsive behavior
+                targetRowHeight={Math.max(80, Math.min(220, Math.round(width / 10)))}
                 withLightbox={true}
             /></div>]
             setPhotosHero( {
