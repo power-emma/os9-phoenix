@@ -19,8 +19,8 @@
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
-    "start": "vite",
-    "build": "vite build",
+  "start": "vite",
+  "build": "vite build && node ./scripts/fix-build-domains.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "dev": "vite"

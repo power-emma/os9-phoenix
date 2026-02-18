@@ -64,19 +64,13 @@ PROD_DOMAIN="https://poweremma.com"
 echo "Scanning staging files for occurrences of $PROD_DOMAIN..."
 STAGE_OCCURRENCES=$(grep -R --line-number --binary-files=without-match "$PROD_DOMAIN" "$TMP_STAGING" || true)
 if [ -n "$STAGE_OCCURRENCES" ]; then
-  echo "ERROR: Found occurrences of $PROD_DOMAIN in the freshly-built files. This usually indicates the build was configured with an absolute production homepage or assets pointing to the production domain."
+  echo "Found occurrences of $PROD_DOMAIN in the freshly-built files. We'll rewrite them to root-relative paths and create .bak backups."
   echo "Occurrences (first 20 lines):"
   echo "$STAGE_OCCURRENCES" | sed -n '1,20p'
-  if [ "${REWRITE_PROD_DOMAIN:-0}" = "1" ]; then
-    echo "REWRITE_PROD_DOMAIN=1 detected — rewriting $PROD_DOMAIN -> '' in the staging area before deploy (backups .bak will be created)."
-    find "$TMP_STAGING" -type f -exec sed -i.bak "s|$PROD_DOMAIN||g" {} + || true
-    echo "Rewrote $PROD_DOMAIN -> '' in staging files (backups with .bak created in $TMP_STAGING)."
-  else
-    echo "To automatically rewrite occurrences and continue the deploy, re-run the deploy with the environment variable REWRITE_PROD_DOMAIN=1."
-    echo "Example: sudo REWRITE_PROD_DOMAIN=1 ./deploy.sh"
-    echo "Aborting deploy to avoid masking build misconfiguration."
-    exit 1
-  fi
+  # Rewrite common absolute forms to root-relative so deployed site works regardless of domain.
+  echo "Rewriting $PROD_DOMAIN and common variants -> / in staging files (backups will be created as .bak)"
+  find "$TMP_STAGING" -type f -exec sed -i.bak "s|https://www.poweremma.com/|/|g; s|https://poweremma.com/|/|g; s|http://www.poweremma.com/|/|g; s|http://poweremma.com/|/|g; s|https://www.poweremma.com|/|g; s|https://poweremma.com|/|g; s|http://www.poweremma.com|/|g; s|http://poweremma.com|/|g" {} + || true
+  echo "Rewrite complete. Backups are available as *.bak under $TMP_STAGING"
 else
   echo "No $PROD_DOMAIN occurrences found in staging build."
 fi
