@@ -237,6 +237,17 @@ if [ "${ENABLE_HTTPS:-0}" = "1" ]; then
       echo "Installing certbot via apt-get..."
       sudo apt-get update -y || true
       sudo apt-get install -y certbot python3-certbot-nginx || true
+    elif command -v yum >/dev/null 2>&1; then
+      echo "Installing certbot via yum (Amazon Linux / RHEL/CentOS path)..."
+      # Try enabling EPEL and installing certbot from the distro repos
+      sudo yum install -y epel-release || true
+      # On Amazon Linux 2, amazon-linux-extras may be available; try it first
+      if command -v amazon-linux-extras >/dev/null 2>&1; then
+        sudo amazon-linux-extras enable epel || true
+      fi
+      sudo yum makecache fast || true
+      # Try to install python3 plugin first; fall back to certbot only if plugin isn't available
+      sudo yum install -y certbot python3-certbot-nginx || sudo yum install -y certbot || true
     elif command -v snap >/dev/null 2>&1; then
       echo "Installing certbot via snap..."
       sudo snap install core || true
@@ -244,7 +255,7 @@ if [ "${ENABLE_HTTPS:-0}" = "1" ]; then
       sudo snap install --classic certbot || true
       sudo ln -sf /snap/bin/certbot /usr/bin/certbot || true
     else
-      echo "Could not find apt-get or snap to install certbot. Please install certbot manually and re-run the script with ENABLE_HTTPS=1"
+      echo "Could not find apt-get, yum or snap to install certbot. Please install certbot manually and re-run the script with ENABLE_HTTPS=1"
       exit 1
     fi
   else
