@@ -164,6 +164,16 @@ for f in /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default /etc/ng
   fi
 done
 
+# Remove any other stale conf files in conf.d that could intercept requests
+# (e.g. react.conf from a previous manual setup) — anything that is not our
+# own config file and is not a .bak we just created.
+echo "Scanning /etc/nginx/conf.d/ for stale configs that could shadow os9_phoenix.conf..."
+for f in /etc/nginx/conf.d/*.conf; do
+  [ "$f" = "$NGINX_CONF" ] && continue
+  echo "Backing up stale nginx config: $f -> ${f}.bak.${TS}"
+  sudo mv "$f" "${f}.bak.${TS}" || true
+done
+
 # Write a clear, two-block nginx configuration:
 # 1) a minimal server that listens for www.poweremma.com and redirects to the
 #    bare domain (preserves http scheme here; certbot will create a 443 block).
