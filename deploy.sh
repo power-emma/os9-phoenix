@@ -45,44 +45,89 @@ echo "Build output located at: $BUILD_DIR"
 # Deploy to target directory
 TARGET_DIR="/var/www/html/my-react-app"
 
-echo "Creating target directory $TARGET_DIR (requires sudo) and copying files..."
-sudo mkdir -p "$TARGET_DIR"
-# remove existing contents
-sudo rm -rf "$TARGET_DIR"/*
-# copy files
-sudo cp -r "$BUILD_DIR"/* "$TARGET_DIR"/
+echo "Preparing an atomic deploy into $TARGET_DIR (build copied into a temp dir, verified, then swapped in)."
 
-# Some nginx configs expect the app to be served from a `build` subdirectory (see /etc/nginx/conf.d/react.conf).
-# If any nginx config references /var/www/html/my-react-app/build, mirror the build into that subdirectory too.
-if sudo grep -R "/var/www/html/my-react-app/build" /etc/nginx -n >/dev/null 2>&1; then
-  echo "Nginx expects files under $TARGET_DIR/build — creating and copying build there too"
-  sudo rm -rf "$TARGET_DIR/build"
-  sudo mkdir -p "$TARGET_DIR/build"
-  sudo cp -r "$BUILD_DIR"/* "$TARGET_DIR/build/"
-  # set ownership similar to parent
-  if [ -n "$WEB_GROUP" ]; then
-    sudo chown -R "$CURUSER":$WEB_GROUP "$TARGET_DIR/build" || true
-  else
-    sudo chown -R "$CURUSER":"$CURUSER" "$TARGET_DIR/build" || true
-  fi
+# Create a temporary staging area for the freshly-built site (local, not owned by root)
+TS=$(date +%s)
+TMP_STAGING=$(mktemp -d "/tmp/os9_phoenix_build.${TS}.XXXX")
+echo "Copying build output into staging area: $TMP_STAGING"
+cp -r "$BUILD_DIR"/* "$TMP_STAGING"/
+
+# Ensure index.html exists in the staging area
+if [ ! -f "$TMP_STAGING/index.html" ]; then
+  echo "Error: expected $TMP_STAGING/index.html not found. Build may have failed or output layout is unexpected."
+  exit 1
 fi
 
-# Safety: some builds may still contain absolute references to the production domain (poweremma.com).
-# Replace any such occurrences in the deployed files with root-relative paths so the site works when
-# served from this host. This is a fallback to handle stale or misconfigured builds.
+# Check for any remaining hard-coded production domain entries in the freshly-built files.
 PROD_DOMAIN="https://poweremma.com"
-echo "Rewriting any occurrences of $PROD_DOMAIN in deployed files to root-relative paths..."
-sudo grep -R --line-number --binary-files=without-match "$PROD_DOMAIN" "$TARGET_DIR" || true
-# Replace in-place (create backup .bak) across text files under target dir
-sudo find "$TARGET_DIR" -type f -exec sed -i.bak "s|$PROD_DOMAIN||g" {} + || true
-echo "Stripped $PROD_DOMAIN from deployed files (backups with .bak created)."
-REMNANTS=$(sudo grep -R --line-number --binary-files=without-match "$PROD_DOMAIN" "$TARGET_DIR" || true)
-if [ -n "$REMNANTS" ]; then
-  echo "Warning: some occurrences of $PROD_DOMAIN remain in deployed files:";
-  echo "$REMNANTS";
+echo "Scanning staging files for occurrences of $PROD_DOMAIN..."
+STAGE_OCCURRENCES=$(grep -R --line-number --binary-files=without-match "$PROD_DOMAIN" "$TMP_STAGING" || true)
+if [ -n "$STAGE_OCCURRENCES" ]; then
+  echo "Found occurrences of $PROD_DOMAIN in the freshly-built files. Will rewrite them in the staging area before deploy."
+  # Replace in-place in staging (create .bak backups there)
+  find "$TMP_STAGING" -type f -exec sed -i.bak "s|$PROD_DOMAIN||g" {} + || true
+  echo "Rewrote $PROD_DOMAIN -> '' in staging files (backups with .bak created in $TMP_STAGING)."
 else
-  echo "No remaining $PROD_DOMAIN references found in deployed files."
+  echo "No $PROD_DOMAIN occurrences found in staging build."
 fi
+
+# Compute checksum of the staging index.html for verification and diagnostic reporting
+STAGE_SUM=$(sha256sum "$TMP_STAGING/index.html" | cut -d' ' -f1 || true)
+echo "Staging index.html sha256: $STAGE_SUM"
+
+# Prepare target new dir and copy staging into it (use sudo because target is owned by root/nginx)
+TARGET_NEW="${TARGET_DIR}.new.${TS}"
+echo "Creating target staging dir: $TARGET_NEW"
+sudo rm -rf "$TARGET_NEW" || true
+sudo mkdir -p "$TARGET_NEW"
+sudo cp -r "$TMP_STAGING"/* "$TARGET_NEW"/
+
+# If any nginx configs reference $TARGET_DIR/build, mirror into a build subdir as well (for compatibility)
+if sudo grep -R "/var/www/html/my-react-app/build" /etc/nginx -n >/dev/null 2>&1; then
+  echo "Detected nginx configs expecting $TARGET_DIR/build — mirroring into $TARGET_NEW/build"
+  sudo rm -rf "$TARGET_NEW/build" || true
+  sudo mkdir -p "$TARGET_NEW/build"
+  sudo cp -r "$TMP_STAGING"/* "$TARGET_NEW/build/"
+fi
+
+# Run the same post-deploy rewrite safety check on the target-new dir (extra safeguard)
+echo "Final scan of $TARGET_NEW for $PROD_DOMAIN (should be none)..."
+sudo grep -R --line-number --binary-files=without-match "$PROD_DOMAIN" "$TARGET_NEW" || true
+sudo find "$TARGET_NEW" -type f -exec sed -i.bak "s|$PROD_DOMAIN||g" {} + || true
+
+# Compute checksum of the to-be-deployed index.html
+DEPLOY_SUM=$(sudo sha256sum "$TARGET_NEW/index.html" | cut -d' ' -f1 || true)
+echo "Prepared deploy index.html sha256: $DEPLOY_SUM"
+
+if [ "$STAGE_SUM" != "$DEPLOY_SUM" ]; then
+  echo "Warning: staging checksum ($STAGE_SUM) differs from prepared deploy checksum ($DEPLOY_SUM)."
+fi
+
+# Atomically swap the directories: move current -> backup, move new -> current
+BACKUP_DIR="${TARGET_DIR}.bak.${TS}"
+echo "Performing atomic swap: $TARGET_DIR -> $BACKUP_DIR ; $TARGET_NEW -> $TARGET_DIR"
+if [ -d "$TARGET_DIR" ]; then
+  sudo mv "$TARGET_DIR" "$BACKUP_DIR" || true
+fi
+sudo mv "$TARGET_NEW" "$TARGET_DIR" || (echo "Failed to move $TARGET_NEW -> $TARGET_DIR" && exit 1)
+
+# Optionally keep the backup for quick rollback; remove backups older than 7 days
+echo "Cleaning up old backups (older than 7 days) under /var/www/html..."
+sudo find /var/www/html -maxdepth 1 -name 'my-react-app.bak.*' -type d -mtime +7 -exec rm -rf {} + || true
+
+# Set ownership on the freshly-deployed directory
+if [ -n "$WEB_GROUP" ]; then
+  echo "Setting ownership of $TARGET_DIR to $CURUSER:$WEB_GROUP"
+  sudo chown -R "$CURUSER":$WEB_GROUP "$TARGET_DIR" || true
+else
+  echo "Setting ownership of $TARGET_DIR to $CURUSER:$CURUSER"
+  sudo chown -R "$CURUSER":"$CURUSER" "$TARGET_DIR" || true
+fi
+
+# Remove staging temp directory
+rm -rf "$TMP_STAGING" || true
+echo "Atomic deploy complete. New site at $TARGET_DIR (index.html sha256: $DEPLOY_SUM). Backup kept at $BACKUP_DIR."
 
 # Optionally set ownership to current user:web-group (adjust as needed)
 if id -u >/dev/null 2>&1; then
