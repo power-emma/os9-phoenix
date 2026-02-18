@@ -171,7 +171,17 @@ const WM = () => {
 
         (async () => {
             let cfg = await tryFetch('/api/desktop');
-            if (!cfg) cfg = await tryFetch('http://localhost:3000/api/desktop');
+            // If that fails, try a backend on the same host at port 3000 (handles localhost and raw IP dev hosts)
+            if (!cfg) {
+                try {
+                    const host = window.location.hostname || 'localhost';
+                    const proto = window.location.protocol || 'http:';
+                    const backendUrl = `${proto}//${host}:3000/api/desktop`;
+                    cfg = await tryFetch(backendUrl);
+                } catch (e) {
+                    // ignore
+                }
+            }
             if (!cfg) cfg = await tryFetch('/desktop.ini');
             if (cfg) setDesktopConfig(cfg);
         })();

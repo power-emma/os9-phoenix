@@ -21,7 +21,7 @@ const chatRouter = require('./routes/chat');
 app.use('/api/chat', chatRouter);
 console.log('Mounted routes: /api/desktop, /api/chat');
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Express server running at http://localhost:${port}/`);
+// Start the server and listen on all interfaces so it is reachable by IP address
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Express server running at http://0.0.0.0:${port}/`);
 });
