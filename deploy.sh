@@ -64,10 +64,19 @@ PROD_DOMAIN="https://poweremma.com"
 echo "Scanning staging files for occurrences of $PROD_DOMAIN..."
 STAGE_OCCURRENCES=$(grep -R --line-number --binary-files=without-match "$PROD_DOMAIN" "$TMP_STAGING" || true)
 if [ -n "$STAGE_OCCURRENCES" ]; then
-  echo "Found occurrences of $PROD_DOMAIN in the freshly-built files. Will rewrite them in the staging area before deploy."
-  # Replace in-place in staging (create .bak backups there)
-  find "$TMP_STAGING" -type f -exec sed -i.bak "s|$PROD_DOMAIN||g" {} + || true
-  echo "Rewrote $PROD_DOMAIN -> '' in staging files (backups with .bak created in $TMP_STAGING)."
+  echo "ERROR: Found occurrences of $PROD_DOMAIN in the freshly-built files. This usually indicates the build was configured with an absolute production homepage or assets pointing to the production domain."
+  echo "Occurrences (first 20 lines):"
+  echo "$STAGE_OCCURRENCES" | sed -n '1,20p'
+  if [ "${REWRITE_PROD_DOMAIN:-0}" = "1" ]; then
+    echo "REWRITE_PROD_DOMAIN=1 detected — rewriting $PROD_DOMAIN -> '' in the staging area before deploy (backups .bak will be created)."
+    find "$TMP_STAGING" -type f -exec sed -i.bak "s|$PROD_DOMAIN||g" {} + || true
+    echo "Rewrote $PROD_DOMAIN -> '' in staging files (backups with .bak created in $TMP_STAGING)."
+  else
+    echo "To automatically rewrite occurrences and continue the deploy, re-run the deploy with the environment variable REWRITE_PROD_DOMAIN=1."
+    echo "Example: sudo REWRITE_PROD_DOMAIN=1 ./deploy.sh"
+    echo "Aborting deploy to avoid masking build misconfiguration."
+    exit 1
+  fi
 else
   echo "No $PROD_DOMAIN occurrences found in staging build."
 fi
