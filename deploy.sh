@@ -165,8 +165,8 @@ server {
 
   # Redirect requests for the www host to the canonical bare domain
   # preserves the original scheme (http/https) so validation/redirects behave safely
-  if ($host = 'www.poweremma.com') {
-    return 301 $scheme://poweremma.com$request_uri;
+  if (\$host = 'www.poweremma.com') {
+    return 301 \$scheme://poweremma.com\$request_uri;
   }
 
   # Serve the deployed directory root (matches the atomic deploy target)
