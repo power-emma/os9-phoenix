@@ -181,8 +181,8 @@ server {
   }
 
   # Optional: serve static assets with long cache
-  location ~* \.(?:css|js|jpg|jpeg|gif|png|svg|ico|webp|ttf|woff2?)$ {
-    try_files $uri =404;
+  location ~* \\.(?:css|js|jpg|jpeg|gif|png|svg|ico|webp|ttf|woff2?)$ {
+    try_files \$uri =404;
     access_log off;
     add_header Cache-Control "public, max-age=31536000, immutable";
   }
