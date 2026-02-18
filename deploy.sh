@@ -45,6 +45,21 @@ sudo rm -rf "$TARGET_DIR"/*
 # copy files
 sudo cp -r "$BUILD_DIR"/* "$TARGET_DIR"/
 
+# Some nginx configs expect the app to be served from a `build` subdirectory (see /etc/nginx/conf.d/react.conf).
+# If any nginx config references /var/www/html/my-react-app/build, mirror the build into that subdirectory too.
+if sudo grep -R "/var/www/html/my-react-app/build" /etc/nginx -n >/dev/null 2>&1; then
+  echo "Nginx expects files under $TARGET_DIR/build — creating and copying build there too"
+  sudo rm -rf "$TARGET_DIR/build"
+  sudo mkdir -p "$TARGET_DIR/build"
+  sudo cp -r "$BUILD_DIR"/* "$TARGET_DIR/build/"
+  # set ownership similar to parent
+  if [ -n "$WEB_GROUP" ]; then
+    sudo chown -R "$CURUSER":$WEB_GROUP "$TARGET_DIR/build" || true
+  else
+    sudo chown -R "$CURUSER":"$CURUSER" "$TARGET_DIR/build" || true
+  fi
+fi
+
 # Optionally set ownership to current user:web-group (adjust as needed)
 if id -u >/dev/null 2>&1; then
   CURUSER=$(id -un)
@@ -65,8 +80,59 @@ if id -u >/dev/null 2>&1; then
   fi
 fi
 
-# Reload nginx to pick up new files
-sudo systemctl reload nginx
+# Install nginx site config for this app (serve static build and proxy /api to backend)
+NGINX_CONF="/etc/nginx/conf.d/os9_phoenix.conf"
+echo "Writing nginx config to $NGINX_CONF (requires sudo)"
+sudo bash -c "cat > $NGINX_CONF" <<'NGCONF'
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    root /var/www/html/my-react-app/build;
+    index index.html;
+
+    access_log /var/log/nginx/os9_phoenix.access.log;
+    error_log  /var/log/nginx/os9_phoenix.error.log warn;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:3000/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Optional: serve static assets with long cache
+    location ~* \.(?:css|js|jpg|jpeg|gif|png|svg|ico|webp|ttf|woff2?)$ {
+        try_files $uri =404;
+        access_log off;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+}
+NGCONF
+
+# Ensure log files exist and are writable by nginx
+sudo touch /var/log/nginx/os9_phoenix.access.log /var/log/nginx/os9_phoenix.error.log || true
+if [ -n "$WEB_GROUP" ]; then
+  sudo chown root:$WEB_GROUP /var/log/nginx/os9_phoenix.* || true
+fi
+
+echo "Testing nginx configuration"
+if ! sudo nginx -t; then
+  echo "nginx config test FAILED — showing $NGINX_CONF"
+  sudo sed -n '1,200p' "$NGINX_CONF" || true
+  sudo systemctl status nginx --no-pager || true
+  if [ -f /var/log/nginx/error.log ]; then sudo tail -n 50 /var/log/nginx/error.log || true; fi
+  echo "Aborting deploy due to nginx config test failure"
+  exit 1
+fi
+
 echo "Reloading nginx (requires sudo)..."
 if ! sudo systemctl reload nginx; then
   echo "nginx reload failed — printing nginx status and recent error log lines"
