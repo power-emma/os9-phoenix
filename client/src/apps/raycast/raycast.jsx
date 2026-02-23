@@ -358,11 +358,65 @@ const Raycast = ({init}) => {
     }, [init && init.width, init && init.height]);
     
 
+    // Detect mobile (touch device)
+    const isMobile = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+    // Touch button style helper
+    const touchBtnStyle = (extraStyle = {}) => ({
+        width: 64,
+        height: 64,
+        borderRadius: 12,
+        background: 'rgba(0,0,0,0.45)',
+        border: '2px solid rgba(255,255,255,0.35)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        touchAction: 'none',
+        color: '#fff',
+        fontSize: 28,
+        cursor: 'pointer',
+        ...extraStyle,
+    });
+
+    // Touch event handlers — set ref on touchstart, clear on touchend/touchcancel
+    const makeTouchHandlers = (ref) => ({
+        onTouchStart: (e) => { e.preventDefault(); ref.current = 1; },
+        onTouchEnd:   (e) => { e.preventDefault(); ref.current = 0; },
+        onTouchCancel:(e) => { e.preventDefault(); ref.current = 0; },
+    });
+
     // Simple HTML
     return(
         <div style={{width: "100%", height: "100%", position: "relative"}}>
             <canvas ref={backgfloorCanvasRef} width={init.width} height={init.height} style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>
             <canvas ref={canvasRef} width={init.width} height={init.height}  style={{width: "100%", height: "100%", top: "0", left: "0", position: "absolute"}}/>
+
+            {isMobile && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: 18,
+                    left: 0,
+                    right: 0,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-end',
+                    padding: '0 18px',
+                    pointerEvents: 'none',
+                }}>
+                    {/* Look left / right */}
+                    <div style={{display: 'flex', gap: 12, pointerEvents: 'all'}}>
+                        <div style={touchBtnStyle()} {...makeTouchHandlers(leftRef)}>◀</div>
+                        <div style={touchBtnStyle()} {...makeTouchHandlers(rightRef)}>▶</div>
+                    </div>
+
+                    {/* Move forward */}
+                    <div style={{pointerEvents: 'all'}}>
+                        <div style={touchBtnStyle()} {...makeTouchHandlers(upRef)}>▲</div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 

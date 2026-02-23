@@ -15,7 +15,7 @@ class Desktop extends React.Component {
             overflow: "hidden",
             position: "absolute"
         }
-        return <img style = {desktopStyle} src={aurora} >
+        return <img style={desktopStyle} src={aurora} onLoad={this.props.onLoad} >
 
         </img>
     }

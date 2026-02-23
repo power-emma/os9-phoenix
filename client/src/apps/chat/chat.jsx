@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import AolSplash from './AolSplash';
 
 export default function Chat({ init }) {
   const [username, setUsername] = useState(() => {
@@ -96,8 +97,26 @@ export default function Chat({ init }) {
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', height: '100%', width: '100%', background: '#ffffff'}}>
-      <div style={{padding: '8px', borderBottom: '1px solid #ccc', display: 'flex', gap: '8px', width: '100%'}}>
-        <input placeholder="username" value={username} onChange={e=>setUsername(e.target.value)} style={{flex: 1, minWidth: '120px'}} />
+      {/* AOL splash — replaces the chat UI until signed on */}
+      {!username ? (
+        <div style={{flex: 1, minHeight: 0, overflow: 'hidden'}}>
+          <AolSplash onSignOn={(name) => setUsername(name)} />
+        </div>
+      ) : (<>
+
+      <div style={{padding: '8px', borderBottom: '1px solid #ccc', display: 'flex', gap: '8px', width: '100%', alignItems: 'center'}}>
+        <span style={{fontSize: '12px', color: '#555', flexShrink: 0}}>
+          Signed in as <strong>{username}</strong>
+        </span>
+        <button
+          style={{marginLeft: 'auto', fontSize: '11px'}}
+          onClick={() => {
+            setUsername('');
+            try { localStorage.removeItem('chat.username'); } catch (e) {}
+          }}
+        >
+          Switch User
+        </button>
         <button onClick={() => {
           // clear local messages and set lastClear to now so older messages won't reappear
           const now = Date.now();
@@ -121,6 +140,7 @@ export default function Chat({ init }) {
           <button onClick={sendMessage} style={{minWidth: '80px'}}>Send</button>
         </div>
       </div>
+      </>)}
     </div>
   )
 }

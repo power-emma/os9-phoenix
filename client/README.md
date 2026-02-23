@@ -18,5 +18,24 @@ React was chosen due to it's component system, allowing any react application to
 ## Run Instructions
 - Clone Repo
 - Run `npm i` to acquire all dependencies
+
+### Local Development (no nginx required)
+Two terminals are needed — the Vite dev server proxies `/api/*` to the Express backend automatically.
+
+**Terminal 1 — backend:**
+```bash
+cd server && npm run dev
+# Express listens on http://localhost:3001
+```
+
+**Terminal 2 — frontend:**
+```bash
+cd client && npm run dev
+# Vite listens on http://localhost:5173
+# /api/* requests are proxied to :3001
+```
+
+### Production
+nginx proxies `/api/*` to the Express backend on port 3000 and serves the built client bundle.
 - Run `npm start` to start development server
 - Run `npm run deploy` to push to web server

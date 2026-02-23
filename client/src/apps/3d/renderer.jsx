@@ -110,6 +110,7 @@ const Renderer = ({ init }) => {
     const [normalsView, setNormalsView] = useState(true);
     const [showTileDebug, setShowTileDebug] = useState(false);
     const [fps, setFps] = useState(0);
+    const [showSettings, setShowSettings] = useState(false);
     const framesRef2 = useRef(0);
     const lastFpsTimeRef = useRef(performance.now());
 
@@ -750,18 +751,120 @@ const Renderer = ({ init }) => {
         };
     }, [wireframe, normalsView, showTileDebug, tileSize, resolutionExp]);
 
+    // Detect mobile (touch device)
+    const isMobile = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+    // Touch look refs — accumulated every frame then zeroed
+    const touchLookRef = useRef({ yaw: 0, pitch: 0 });
+    const touchLookIntervalRef = useRef(null);
+
+    // Start/stop a continuous look-rotation while a button is held
+    const startLook = (dyaw, dpitch) => {
+        if (touchLookIntervalRef.current) return;
+        touchLookIntervalRef.current = setInterval(() => {
+            cameraRef.current.yaw   = (cameraRef.current.yaw   || 0) + dyaw;
+            cameraRef.current.pitch = (cameraRef.current.pitch || 0) + dpitch;
+            // clamp pitch
+            const maxPitch = Math.PI / 2 - 0.001;
+            if (cameraRef.current.pitch >  maxPitch) cameraRef.current.pitch =  maxPitch;
+            if (cameraRef.current.pitch < -maxPitch) cameraRef.current.pitch = -maxPitch;
+        }, 16);
+    };
+    const stopLook = () => {
+        if (touchLookIntervalRef.current) {
+            clearInterval(touchLookIntervalRef.current);
+            touchLookIntervalRef.current = null;
+        }
+    };
+
+    // Touch button style
+    const tbStyle = (extra = {}) => ({
+        width: 56,
+        height: 56,
+        borderRadius: 10,
+        background: 'rgba(0,0,0,0.45)',
+        border: '2px solid rgba(255,255,255,0.35)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        touchAction: 'none',
+        color: '#fff',
+        fontSize: 24,
+        cursor: 'pointer',
+        ...extra,
+    });
+
+    // Helpers to bind move keys to touch
+    const moveTouchHandlers = (key) => ({
+        onTouchStart: (e) => { e.preventDefault(); keysRef.current[key] = true; },
+        onTouchEnd:   (e) => { e.preventDefault(); keysRef.current[key] = false; },
+        onTouchCancel:(e) => { e.preventDefault(); keysRef.current[key] = false; },
+    });
+
+    // Helpers to bind look rotation to touch
+    const lookTouchHandlers = (dyaw, dpitch) => ({
+        onTouchStart: (e) => { e.preventDefault(); stopLook(); startLook(dyaw, dpitch); },
+        onTouchEnd:   (e) => { e.preventDefault(); stopLook(); },
+        onTouchCancel:(e) => { e.preventDefault(); stopLook(); },
+    });
+
     // Dense HTML
     return (<div style={{ width: "100%", height: "100%", position: "relative" }}>
         <div style={{ width: "100%", height: "100%", position: "relative" }} >
             <canvas ref={backgroundCanvasRef} width={width} height={(height * 0.9)} style={{ width: "100%", height: "100%", top: "0", left: "0", position: "absolute" }} />
             <canvas ref={canvasRef} width={width} height={(height * 0.9)} style={{ width: "100%", height: "100%", top: "0", left: "0", position: "absolute" }} />
         </div>
-        {/* Debug control panel (macOS 9 style) */}
-        <div style={{ position: 'absolute', left: 12, top: 12, width: "15%", userSelect: 'none', zIndex: 999 }}>
-            <div style={{ backgroundColor: 'rgb(204,204,204)', border: '1px solid rgb(119,119,119)' }}>
-                <div style={{ height: 22, paddingLeft: 6, fontFamily: 'Charcoal, geneva, sans-serif', fontSize: 13, display: 'flex', alignItems: 'center' }}>
-                    <strong>Renderer Setings</strong>
+        {/* Mobile touch controls */}
+        {isMobile && (
+            <div style={{
+                position: 'absolute',
+                bottom: 14,
+                left: 0,
+                right: 0,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-end',
+                padding: '0 14px',
+                pointerEvents: 'none',
+                zIndex: 100,
+            }}>
+                {/* Look pad — left side */}
+                <div style={{ display: 'grid', gridTemplateColumns: '56px 56px 56px', gridTemplateRows: '56px 56px', gap: 8, pointerEvents: 'all' }}>
+                    {/* row 0: left / up / right */}
+                    <div/>
+                    <div style={tbStyle()} {...lookTouchHandlers(0, -0.04)}>▲</div>
+                    
+                    
+                    
+                    {/* row 1: (empty) / down / (empty) */}
+                    <div />
+                    <div style={tbStyle()} {...lookTouchHandlers(-0.04, 0)}>◀</div>
+                    <div style={tbStyle()} {...lookTouchHandlers(0, 0.04)}>▼</div>
+                    <div style={tbStyle()} {...lookTouchHandlers( 0.04, 0)}>▶</div>
+
                 </div>
+
+                {/* Move pad — right side */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', pointerEvents: 'all' }}>
+                    <div style={tbStyle()} {...moveTouchHandlers('w')}>▲</div>
+                    <div style={tbStyle()} {...moveTouchHandlers('s')}>▼</div>
+                </div>
+            </div>
+        )}
+        {/* Debug control panel (macOS 9 style) */}
+        <div style={{ position: 'absolute', left: 12, top: 12, width: "15%", minWidth: 160, userSelect: 'none', zIndex: 999 }}>
+            <div style={{ backgroundColor: 'rgb(204,204,204)', border: '1px solid rgb(119,119,119)' }}>
+                {/* Clickable titlebar — toggles body */}
+                <div
+                    onClick={() => setShowSettings(s => !s)}
+                    style={{ height: 22, paddingLeft: 6, paddingRight: 6, fontFamily: 'Charcoal, geneva, sans-serif', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+                >
+                    <strong>Renderer Settings</strong>
+                    <span style={{ fontSize: 10, lineHeight: 1 }}>{showSettings ? '▲' : '▼'}</span>
+                </div>
+                {showSettings && (
                     <div style={{ padding: "0.5em", background: 'linear-gradient(180deg, #fff, #ddd)' }}>
                     <div style={{ display: 'inline', gap: 8, alignItems: 'center', marginBottom: "0.1em" }}>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: "0.1em" }}>
@@ -771,7 +874,6 @@ const Renderer = ({ init }) => {
                             </label>
                         </div>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: "0.1em" }}>
-
                             <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Charcoal' }}>
                                 <input type="checkbox" checked={normalsView} onChange={(e) => setNormalsView(e.target.checked)} />
                                 <span>Normals</span>
@@ -806,10 +908,10 @@ const Renderer = ({ init }) => {
                         </select>
                     </div>
 
-                    <div style={{  marginBottom: "0.1em" }}>
-                    <label style={{ display: 'block', fontFamily: 'Charcoal', fontSize: 12, marginBottom: 0 }}>Resolution: {resolutionScale.toFixed(3)}x</label>
-                    <input type="range" min={0} max={4} step={0.25} value={resolutionExp} onChange={(e) => setResolutionExp(Number(e.target.value))} style={{ width: '100%' }} />
-                    <div style={{ fontFamily: 'Charcoal', fontSize: 11, marginTop: -10 }}>Internal: {Math.max(1, Math.floor(width * resolutionScale))} × {Math.max(1, Math.floor((height * resolutionScale)))} px</div>
+                    <div style={{ marginBottom: "0.1em" }}>
+                        <label style={{ display: 'block', fontFamily: 'Charcoal', fontSize: 12, marginBottom: 0 }}>Resolution: {resolutionScale.toFixed(3)}x</label>
+                        <input type="range" min={0} max={4} step={0.25} value={resolutionExp} onChange={(e) => setResolutionExp(Number(e.target.value))} style={{ width: '100%' }} />
+                        <div style={{ fontFamily: 'Charcoal', fontSize: 11, marginTop: -10 }}>Internal: {Math.max(1, Math.floor(width * resolutionScale))} × {Math.max(1, Math.floor((height * resolutionScale)))} px</div>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -817,6 +919,7 @@ const Renderer = ({ init }) => {
                         <button onClick={() => { cameraRef.current = { x: 0, y: 0, z: 1, pitch: 0, yaw: 0, fov: cameraRef.current.fov }; }} style={{ padding: '6px 8px', background: 'rgb(221,221,221)', border: '1px solid rgb(119,119,119)', fontFamily: 'Charcoal' }}>Reset</button>
                     </div>
                 </div>
+                )}
             </div>
         </div>
     </div>

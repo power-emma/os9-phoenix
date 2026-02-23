@@ -4,7 +4,8 @@
   "description": "API server for os9-phoenix",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "PORT=3001 BIND_ADDR=127.0.0.1 node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

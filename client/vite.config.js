@@ -55,13 +55,23 @@ function devServerPlugin() {
     return {
         name: "dev-server-plugin",
         config(_, { mode }) {
-            const { HOST, PORT, HTTPS, SSL_CRT_FILE, SSL_KEY_FILE } = loadEnv(mode, ".", ["HOST", "PORT", "HTTPS", "SSL_CRT_FILE", "SSL_KEY_FILE"]);
+            const { HOST, PORT, HTTPS, SSL_CRT_FILE, SSL_KEY_FILE, API_PROXY_TARGET } = loadEnv(mode, ".", ["HOST", "PORT", "HTTPS", "SSL_CRT_FILE", "SSL_KEY_FILE", "API_PROXY_TARGET"]);
             const https = HTTPS === "true";
+            // In dev, proxy /api/* to the Express backend so nginx is not required.
+            // Default target is http://localhost:3001 — start the server with PORT=3001.
+            const apiTarget = API_PROXY_TARGET || "http://localhost:3001";
             return {
                 server: {
                     host: HOST || "0.0.0.0",
-                    port: parseInt(PORT || "3000", 10),
+                    port: parseInt(PORT || "5173", 10),
                     open: true,
+                    historyApiFallback: true,
+                    proxy: {
+                        "/api": {
+                            target: apiTarget,
+                            changeOrigin: true,
+                        },
+                    },
                     ...(https &&
                         SSL_CRT_FILE &&
                         SSL_KEY_FILE && {

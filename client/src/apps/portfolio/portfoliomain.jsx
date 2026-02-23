@@ -1,10 +1,89 @@
 import {React, useState, useEffect, useRef} from 'react';
 import { RowsPhotoAlbum } from "react-photo-album";
 import "react-photo-album/rows.css";
-import ReactDOM from 'react-dom/client';
 import background from './background.png'
 import emma from "./emma.webp"
 import './portfolio.css'
+
+// Photo arrays are constant — defined outside the component so they are never recreated on re-render
+const favPics = [
+    { src: "./photos/film/f1.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f2.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f3.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f4.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f5.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f6.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f7.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f8.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f9.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f10.jpg", width: 1544, height: 1024 },
+    { src: "./photos/film/f11.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f12.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f13.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f14.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f15.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f16.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f17.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f18.jpg", width: 1544, height: 1024 },
+    { src: "./photos/film/f19.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f20.jpg", width: 1024, height: 1544 },
+];
+const qtp = [
+    { src: "./photos/qt/qt1.jpg", width: 480, height: 640 },
+    { src: "./photos/qt/qt2.jpg", width: 480, height: 640 },
+    { src: "./photos/qt/qt3.jpg", width: 480, height: 640 },
+    { src: "./photos/qt/qt4.jpg", width: 640, height: 480 },
+    { src: "./photos/qt/qt5.jpg", width: 640, height: 480 },
+    { src: "./photos/qt/qt6.jpg", width: 480, height: 640 },
+];
+const mavicaPics = [
+    { src: "./photos/mavica/m1.jpg", width: 480, height: 640 },
+    { src: "./photos/mavica/m2.jpg", width: 640, height: 480 },
+    { src: "./photos/mavica/m3.jpg", width: 480, height: 640 },
+    { src: "./photos/mavica/m4.jpg", width: 640, height: 480 },
+    { src: "./photos/mavica/m5.jpg", width: 480, height: 640 },
+    { src: "./photos/mavica/m6.jpg", width: 480, height: 640 },
+    { src: "./photos/mavica/m7.jpg", width: 480, height: 640 },
+    { src: "./photos/mavica/m8.jpg", width: 480, height: 640 },
+    { src: "./photos/mavica/m9.jpg", width: 480, height: 640 },
+    { src: "./photos/mavica/m10.jpg", width: 480, height: 640 },
+    { src: "./photos/mavica/m11.jpg", width: 480, height: 640 },
+    { src: "./photos/mavica/m12.jpg", width: 480, height: 640 },
+    { src: "./photos/mavica/m13.jpg", width: 480, height: 640 },
+];
+const filmPics = [
+    { src: "./photos/film/f1.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f2.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f3.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f4.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f5.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f6.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f7.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f8.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f9.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f10.jpg", width: 1544, height: 1024 },
+    { src: "./photos/film/f11.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f12.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f13.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f14.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f15.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f16.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f17.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f18.jpg", width: 1544, height: 1024 },
+    { src: "./photos/film/f19.jpg", width: 1024, height: 1544 },
+    { src: "./photos/film/f20.jpg", width: 1024, height: 1544 },
+];
+const spacePics = [
+    { src: "../photos/space/s1.png", width: 2543, height: 1691 },
+    { src: "../photos/space/s2.png", width: 4288, height: 2854 },
+    { src: "../photos/space/s3.png", width: 2743, height: 1824 },
+    { src: "../photos/space/s4.png", width: 2854, height: 4288 },
+    { src: "../photos/space/s5.png", width: 856, height: 1277 },
+    { src: "../photos/space/s6.png", width: 1926, height: 1287 },
+    { src: "../photos/space/s7.png", width: 8596, height: 5708 },
+    { src: "../photos/space/s8.png", width: 2970, height: 3290 },
+    { src: "../photos/space/s9.jpg", width: 958, height: 1277 },
+];
 
 
 
@@ -13,6 +92,8 @@ const PortfolioMain = ({init}) => {
     // Window height and width
     let height = init.height
     let width = init.width
+    // Callback to open a new OS window
+    const openWindow = init.openWindow || null
 
     // How many ems should text be - compute a responsive base and clamp it
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v))
@@ -38,39 +119,22 @@ const PortfolioMain = ({init}) => {
     let h2Size = (2.6 * em) + "em"
     let heropSize = (1.25 * em) + "em"
 
-    // Store page elements as state
-    const [currentPage, setCurrentPage] = useState(<div></div>);
-    
-    // Router who??? (This website is 3 pages it will do fine)
-    const changePage = (to) => {
-        switch(to) {
-            case 'Home':
-                setCurrentPage(home());
-                break;
-            case 'Projects':
-                setCurrentPage(proj());
-                break;
-            case 'Photos':
-                setCurrentPage(photos());
-                break;
-        }
+    // Store page name as state — render inline so everything always uses fresh width/height
+    const [currentPage, setCurrentPage] = useState('Home');
 
-    }
+    // Active photo set for the photos page
+    const [activePicSet, setActivePicSet] = useState({ arr: favPics, name: "Emma's Film Photos", description: "Somehow, humanity managed to gain the power to create an exact likeness of any scene in an instant, before we figured out how to make a cardboard box" });
 
     // Header HTML
-    let header = <div className = "h-25 d-flex justify-content-center " style={{color: "white", fontFamily: "Charcoal",}}>
-        <div className = "col-sm-3 d-flex justify-content-center"> 
-            <h1 style={{fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", padding: "4vh"}}> Emma Power </h1>
+    let header = <div className = "h-25 d-flex align-items-center" style={{color: "white", fontFamily: "Charcoal", width: "100%"}}>
+        <div style={{flex: "0 0 auto", padding: "2vh 2%"}}> 
+            <h1 style={{fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", margin: 0, whiteSpace: "nowrap"}}> Emma Power </h1>
         </div>
-        <div className = "col-sm-6 justify-content-center align-items-center" >
-        <div className = "h-25 d-flex justify-content-center " style={{color: "white"}}></div>
-        
-        </div>
-        <div className = "col-sm-3 d-flex justify-content-center" style={{padding: "4vh", paddingRight: "20vw"}}>
-            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer"}} onClick={() => {changePage("Home")}}>Home</h1>
-            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer"}} onClick={() => {changePage("Projects")}}>   Projects</h1>
-            <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer"}} onClick={() => {changePage("Photos")}}>   Photos</h1>
-
+        <div style={{flex: 1}} />
+        <div className = "d-flex justify-content-end align-items-center" style={{padding: "2vh 2%", gap: "1.5em"}}>
+            <h1 style={{fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer", margin: 0, whiteSpace: "nowrap"}} onClick={() => setCurrentPage("Home")}>Home</h1>
+            <h1 style={{fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer", margin: 0, whiteSpace: "nowrap"}} onClick={() => setCurrentPage("Projects")}>Projects</h1>
+            <h1 style={{fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer", margin: 0, whiteSpace: "nowrap"}} onClick={() => setCurrentPage("Photos")}>Photos</h1>
         </div>
     </div>
 
@@ -85,10 +149,9 @@ const PortfolioMain = ({init}) => {
             
             </div>
             <div className = "" style={{padding: "4vh", paddingRight: "5vw"}}>
-                <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Home")}}>Home</h1>
-                <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Projects")}}>Projects</h1>
-                <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => {changePage("Photos")}}>Photos</h1>
-
+                <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => setCurrentPage("Home")}>Home</h1>
+                <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => setCurrentPage("Projects")}>Projects</h1>
+                <h1 style={{whiteSpace: "pre", fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}} onClick={() => setCurrentPage("Photos")}>Photos</h1>
             </div>
         </div>
     }
@@ -141,7 +204,7 @@ const PortfolioMain = ({init}) => {
                             <p style={{fontSize: heropSize}}>I'm a software engineering student with a passion for all things digital. I enjoy developing software, working with technology new and old, and taking photos using unique cameras!</p>
                         </div>
                         <br/>
-                        <button className="gradbutton" onClick={() => {changePage("Projects")}}>See My Projects</button>
+                        <button className="gradbutton" onClick={() => setCurrentPage("Projects")}>See My Projects</button>
                         <br/>
                         
                     </div>
@@ -313,168 +376,92 @@ const PortfolioMain = ({init}) => {
     </div>
     }
 
-    const favPics = [
-        { src: "./photos/film/f1.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f2.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f3.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f4.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f5.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f6.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f7.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f8.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f9.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f10.jpg", width: 1544, height: 1024 },
-        { src: "./photos/film/f11.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f12.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f13.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f14.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f15.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f16.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f17.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f18.jpg", width: 1544, height: 1024 },
-        { src: "./photos/film/f19.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f20.jpg", width: 1024, height: 1544 },
-    ]
-
-    const qtp = [
-        { src: "./photos/qt/qt1.jpg", width: 480, height: 640 },
-        { src: "./photos/qt/qt2.jpg", width: 480, height: 640 },
-        { src: "./photos/qt/qt3.jpg", width: 480, height: 640 },
-        { src: "./photos/qt/qt4.jpg", width: 640, height: 480 },
-        { src: "./photos/qt/qt5.jpg", width: 640, height: 480 },
-        { src: "./photos/qt/qt6.jpg", width: 480, height: 640 },
-    ];
-
-    const mavicaPics = [
-        { src: "./photos/mavica/m1.jpg", width: 480, height: 640},
-        { src: "./photos/mavica/m2.jpg", width: 640, height: 480},
-        { src: "./photos/mavica/m3.jpg", width: 480, height: 640},
-        { src: "./photos/mavica/m4.jpg", width: 640, height: 480},
-        { src: "./photos/mavica/m5.jpg", width: 480, height: 640},
-        { src: "./photos/mavica/m6.jpg", width: 480, height: 640},
-        { src: "./photos/mavica/m7.jpg", width: 480, height: 640},
-        { src: "./photos/mavica/m8.jpg", width: 480, height: 640},
-        { src: "./photos/mavica/m9.jpg", width: 480, height: 640},
-        { src: "./photos/mavica/m10.jpg", width: 480, height: 640},
-        { src: "./photos/mavica/m11.jpg", width: 480, height: 640},
-        { src: "./photos/mavica/m12.jpg", width: 480, height: 640},
-        { src: "./photos/mavica/m13.jpg", width: 480, height: 640},
-    ]
-
-    const filmPics = [
-        { src: "./photos/film/f1.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f2.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f3.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f4.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f5.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f6.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f7.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f8.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f9.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f10.jpg", width: 1544, height: 1024 },
-        { src: "./photos/film/f11.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f12.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f13.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f14.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f15.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f16.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f17.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f18.jpg", width: 1544, height: 1024 },
-        { src: "./photos/film/f19.jpg", width: 1024, height: 1544 },
-        { src: "./photos/film/f20.jpg", width: 1024, height: 1544 },
-    ]
-    const spacePics = [
-        { src: "../photos/space/s1.png", width: 2543, height: 1691 },
-        { src: "../photos/space/s2.png", width: 4288, height: 2854 },
-        { src: "../photos/space/s3.png", width: 2743, height: 1824 },
-        { src: "../photos/space/s4.png", width: 2854, height: 4288 },
-        { src: "../photos/space/s5.png", width: 856, height: 1277 },
-        { src: "../photos/space/s6.png", width: 1926, height: 1287 },
-        { src: "../photos/space/s7.png", width: 8596, height: 5708 },
-        { src: "../photos/space/s8.png", width: 2970, height: 3290 },
-        { src: "../photos/space/s9.jpg", width: 958, height: 1277 },
-
-    ];
-    const [activePics, setActivePics] = useState([<div classname = 'q'><RowsPhotoAlbum
-        photos={favPics}
-        // use a bounded target height so rows don't become tiny on mobile or huge on desktop
-        targetRowHeight={Math.max(80, Math.min(220, Math.round(width / 10)))}
-        withLightbox={true}
-    /></div>]);
-
-    const [photosHero, setPhotosHero] = useState({
-        name: "Emma's Film Photos",
-        description: "Somehow, humanity managed to gain the power to create an exact likeness of any scene in an instant, before we figured out how to make a cardboard box"
-    });
-
-    useEffect(() => {
-        // Refresh photos page
-        setCurrentPage(photos())
-     }, [activePics])
-
-    // Photos Page (Not implemented)
-    const photos = () => {
-
-        const changePics = (arr,name,desc) => {
-            let newA = [<div classname = 'q'><RowsPhotoAlbum
-                photos={arr}
-                // bounded row height for responsive behavior
-                targetRowHeight={Math.max(80, Math.min(220, Math.round(width / 10)))}
-                withLightbox={true}
-            /></div>]
-            setPhotosHero( {
-                name: name,
-                description: desc
-            })
-            setActivePics(newA)
-
-            console.log("clack")
-            console.log(activePics)
+    const openPhoto = (photo, event) => {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
         }
+        if (!openWindow) return;
+
+        const TITLEBAR = 32; // px — matches the Window component's title bar height
+        const maxW = Math.round(window.innerWidth  * 0.9);
+        const maxH = Math.round(window.innerHeight * 0.9) - TITLEBAR;
+
+        // Scale the image down to fit within the viewport while preserving aspect ratio
+        const aspect = photo.width / photo.height;
+        let imgW = photo.width;
+        let imgH = photo.height;
+        if (imgW > maxW) { imgW = maxW; imgH = Math.round(imgW / aspect); }
+        if (imgH > maxH) { imgH = maxH; imgW = Math.round(imgH * aspect); }
+
+        const winW = imgW;
+        const winH = imgH + TITLEBAR;
+        const startX = Math.round((window.innerWidth  - winW) / 2);
+        const startY = Math.round((window.innerHeight - winH) / 2);
+
+        openWindow(
+            startX, startY, winH, winW,
+            photo.src.split('/').pop(),
+            // width/height fill the content area exactly — no object-fit boxing needed
+            <img src={photo.src} alt={photo.src} style={{width: '100%', height: '100%', display: 'block'}} />
+        );
+    };
+
+    const makeAlbum = (arr) => (
+        <div className='q'>
+            <RowsPhotoAlbum
+                photos={arr}
+                targetRowHeight={Math.max(180, Math.min(400, Math.round(width / 4)))}
+                onClick={({ photo, event }) => openPhoto(photo, event)}
+            />
+        </div>
+    );
+
+    // Photos Page
+    const photos = () => {
+        const { arr, name, description } = activePicSet;
+        const changePics = (newArr, newName, newDesc) =>
+            setActivePicSet({ arr: newArr, name: newName, description: newDesc });
 
         // (Soon to be) HTML and Bootstrap Hell
         return <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", backgroundColor: "#000", position: "flex", imageRendering: "pixelated", width:"100%"}}> 
         
             {header}
             <div className='px-3 d-flex justify-content-center' style={{flexWrap: "wrap"}}>
-
                     <button className="mx-2 my-1 gradbutton" style={{padding: ((width/100) + "px "+ (width/33) + "px"), fontSize: heropSize}} onClick={() => changePics(qtp, "Quicktake", "Released at a time where their logo had a rainbow yet their laptops remained in black and white, Apple's first digital camera remains a competitive choice for capturing UFO sightings")}>Quicktake</button>
                     <button className="mx-2 my-1 gradbutton" style={{padding: ((width/100) + "px "+ (width/33) + "px"), fontSize: heropSize}}  onClick={() => changePics(mavicaPics, "Sony Mavica", "The photographic power of a bank security camera, and the computing power of a floppy disk drive, all in one place")}>Mavica</button>
                     <button className="mx-2 my-1 gradbutton" style={{padding: ((width/100) + "px "+ (width/33) + "px"), fontSize: heropSize}}  onClick={() => changePics(filmPics, "Emma's Film Photos", "Somehow, humanity managed to gain the power to create an exact likeness of any scene in an instant, before we figured out how to make a cardboard box")}>Film</button>
                     <button className="mx-2 my-1 gradbutton" style={{padding: ((width/100) + "px "+ (width/33) + "px"), fontSize: heropSize}}  onClick={() => changePics(spacePics, "Space", "Stars are like pretty cool I guess")}>Space</button>
-
             </div>
             <div className = "d-flex " style={{color: "white", fontFamily: "Charcoal",}}>
-                <div className = "col-sm-2 d-flex justify-content-center"> 
-
-                </div>
+                <div className = "col-sm-2 d-flex justify-content-center"></div>
                 <div className = "p-2 col-sm-8 justify-content-center align-items-center" >
                     <div>
-                        <h1 style={{fontSize: h1Size, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}}>{photosHero.name}</h1>
-                        <p style={{fontSize: heropSize}}>{photosHero.description}</p>
+                        <h1 style={{fontSize: h1Size, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}}>{name}</h1>
+                        <p style={{fontSize: heropSize}}>{description}</p>
                     </div>
                     <div style={{imageRendering: "auto"}}>
-                        {activePics}
+                        {makeAlbum(arr)}
                     </div>
-
                 </div>
-                <div className = "col-sm-2 d-flex justify-content-center align-items-center">
-                    
-                </div>
+                <div className = "col-sm-2 d-flex justify-content-center align-items-center"></div>
             </div>
         </div>
-        
     }
 
-    // Set initial page to home
-    useEffect(() => {
-        setCurrentPage(home())
-    }, [])
+    // Render the current page inline — no JSX stored in state, so resize never causes stale renders
+    const renderPage = () => {
+        switch (currentPage) {
+            case 'Projects': return proj();
+            case 'Photos':   return photos();
+            default:         return home();
+        }
+    }
 
     // Only show the current page
     return(
         <div style={{width:"100%"}}>
-            {currentPage}
+            {renderPage()}
         </div>
     )
 }

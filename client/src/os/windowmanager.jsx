@@ -24,9 +24,10 @@ import renderIcon from './icons/renderer.png'
 import chatIcon from './icons/chat.png'
 
 
-const WM = () => {
-    // Int to store the next zIndex
-    const [maxZIndex, setMaxZIndex] = useState(0);
+const WM = ({ onReady }) => {
+    // Int to store the next zIndex — kept in a ref so closures always read the latest value
+    const maxZIndexRef = useRef(0);
+    const bumpZ = () => { maxZIndexRef.current += 1; return maxZIndexRef.current; };
     // Array of all windows
     const [windows, setWindows] = useState([]);
     // Reference to most updated copy of windows (used when calling from child)
@@ -48,13 +49,10 @@ const WM = () => {
 
     // Brings window with the given id to the top
     function activeWindowHandler(id) {
-        let newValue = maxZIndex + 1;
-        setMaxZIndex(newValue);
-        // Apply new zIndex to the item with said id
-        let newArray = windows.map((item) =>
-          item.id === id ? { ...item, zIndex: newValue } : item
-        );
-        setWindows(newArray);
+        const newValue = bumpZ();
+        setWindows(prev => prev.map(item =>
+            item.id === id ? { ...item, zIndex: newValue } : item
+        ));
     }
 
     const deleteWindow = (id) => {
@@ -75,61 +73,63 @@ const WM = () => {
     }
 
     const makeWindow = (x,y,height,width,name,content) => {
-        // Give window a zIndex
-        let newValue = maxZIndex + 1;
-        setMaxZIndex(newValue);
-        // Give window an ID
-        let newID = windows.length
+        // Give window a zIndex — bumpZ() reads from the ref, so always current even in stale closures
+        let newValue = bumpZ();
 
-        // Make window object
-        let tempWin = <Window init={{
-            x: x,
-            y: y,
-            height: height,
-            width: width,
-            name: name,
-            content: content,
-            id: newID,
-            mobile: mobile
-          }}
-           closeFunction={deleteWindow}
-        />
-        
-        // Make copy of windows
-        let newArray = []
-        windows.forEach((item, index) => {
-            newArray.push(item)
-        })
+        // Clamp size so the window fits within the viewport
+        const menubarH = 22;
+        const maxW = window.innerWidth;
+        const maxH = window.innerHeight - menubarH;
+        const clampedWidth  = Math.min(width,  maxW);
+        const clampedHeight = Math.min(height, maxH);
+        // Clamp position so the window doesn't start off-screen
+        const clampedX = Math.max(0, Math.min(x, maxW  - clampedWidth));
+        const clampedY = Math.max(menubarH, Math.min(y, window.innerHeight - clampedHeight));
 
-        // Add new window to top
-        newArray.push({
-            window: tempWin,
-            id: windows.length,
-            zIndex: newValue,
-            baseX: x,
-            baseY: y
-        })
+        // Use functional update so we always append to the *current* windows array,
+        // not a stale closure snapshot (fixes photo viewer replacing the portfolio window)
+        setWindows(prev => {
+            const newID = prev.length;
 
-        setWindows(newArray);
+            const tempWin = <Window init={{
+                x: clampedX,
+                y: clampedY,
+                height: clampedHeight,
+                width: clampedWidth,
+                name: name,
+                content: content,
+                id: newID,
+                mobile: mobile
+              }}
+               closeFunction={deleteWindow}
+            />
+
+            return [...prev, {
+                window: tempWin,
+                id: newID,
+                zIndex: newValue,
+                baseX: x,
+                baseY: y
+            }];
+        });
     }
 
+    const knownApps = {
+        'portfolio': (w,h) => <PortfolioMain init={{width: w, height: h, openWindow: makeWindow}} />,
+        'orbit':     (w,h) => <Orbit    init={{width: w, height: h}} />,
+        'raycast':   (w,h) => <Raycast  init={{width: w, height: h}} />,
+        'chat':      (w,h) => <Chat     init={{width: w, height: h}} />,
+        'plasma':    (w,h) => <Plasma   init={{width: w, height: h}} />,
+        'renderer':  (w,h) => <Renderer init={{width: w, height: h}} />,
+    };
 
+    // Parse the deep-link slug once at load time (e.g. /chat → 'chat')
+    const deepLinkSlug = window.location.pathname.replace(/^\//, '').split('/')[0].toLowerCase();
 
-    // Blank Array useEffect means this code only runs at startup
-    useEffect(() => {
-        // Spawn Portfolio window
-        makeWindow(20, 24, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", <PortfolioMain init = {{
-            height: window.innerHeight - 60,
-            width: practicalWidth - 40
-        }}/>)
-
-        
-      }, [])
-    
-    // Desktop Icon Tect
+    // Desktop Icon Text
     // base text style for desktop icon labels; the visible background is applied to the label element
     const iconTextStyle = {
-        fontSize: '14pt',
+        fontSize: '11pt',
         textAlign: 'center'
     }
 
@@ -138,6 +138,8 @@ const WM = () => {
     // Format: JSON array of entries: [{"name":"Orbit.js","icon":"/path/to/icon.png","script":"orbit","width":<px>,"height":<px>}]
     // `script` may be a known app id (portfolio, orbit, raycast, plasma, renderer) or a URL (starts with http/ or /) to open in an iframe.
     const [desktopConfig, setDesktopConfig] = useState(null);
+    // Guard so StrictMode's double-invocation of effects never opens two windows
+    const initDone = useRef(false);
 
     useEffect(() => {
         // Try multiple fetch strategies to obtain desktop.ini safely.
@@ -174,17 +176,34 @@ const WM = () => {
             // fallback to static /desktop.ini if API not available
             if (!cfg) cfg = await tryFetch('/desktop.ini');
             if (cfg) setDesktopConfig(cfg);
+            // signal ready regardless of whether config was found
+            if (onReady) onReady();
+
+            // Only open the initial window once — guards against StrictMode double-invoke
+            if (initDone.current) return;
+            initDone.current = true;
+
+            // Open the initial window now that we have the desktop config
+            const slug = deepLinkSlug;
+            if (knownApps[slug]) {
+                // Deep-link: open the requested app
+                const entry = (cfg || []).find(e => (e.script || '').toLowerCase() === slug);
+                const appWidth  = entry?.width  || Math.round(practicalWidth - 40);
+                const appHeight = entry?.height || (window.innerHeight - 60);
+                const startX = entry?.x ?? 20;
+                const startY = entry?.y ?? 24;
+                const appName = entry?.name || slug.charAt(0).toUpperCase() + slug.slice(1);
+                makeWindow(startX, startY, appHeight, appWidth, appName, knownApps[slug](appWidth, appHeight));
+            } else {
+                // Default: open portfolio
+                makeWindow(20, 24, window.innerHeight - 60, practicalWidth - 40, "Emma's Website", <PortfolioMain init={{
+                    height: window.innerHeight - 60,
+                    width: practicalWidth - 40,
+                    openWindow: makeWindow,
+                }}/>);
+            }
         })();
     }, [])
-
-    const knownApps = {
-        'portfolio': (w,h) => <PortfolioMain init={{width: w, height: h}} />,
-        'orbit': (w,h) => <Orbit init={{width: w, height: h}} />,
-        'raycast': (w,h) => <Raycast init={{width: w, height: h}} />,
-        'chat': (w,h) => <Chat init={{width: w, height: h}} />,
-        'plasma': (w,h) => <Plasma init={{width: w, height: h}} />,
-        'renderer': (w,h) => <Renderer init={{width: w, height: h}} />
-    };
 
     const makeContentFromEntry = (entry, w, h) => {
         if (!entry) return null;
@@ -199,19 +218,19 @@ const WM = () => {
         return null;
     }
 
-    const desktopIcons = <div className="justify-content-center" style={{float: "right", marginRight: "200px", marginTop: "16px"}}>
-        { (desktopConfig || [
-            {name: "Emma's Website", icon: siteIcon, script: 'portfolio'},
-            {name: 'Orbit.js', icon: orbitIcon, script: 'orbit'},
-            {name: 'Raycast', icon: raycastIcon, script: 'raycast'},
-            {name: 'Plasma', icon: plasmaIcon, script: 'plasma'},
-            {name: '3D Renderer', icon: renderIcon, script: 'renderer'}
-        ]).map((item, idx) => {
-            // Allow a small padding between icon slots so icons don't sit flush
-            const iconPadding = 4; // px between icon slots
-            const iconSlot = 100 + iconPadding; // base slot height + padding
-            const top = 32 + (idx * iconSlot);
-            // choose a sensible default icon based on the advertised script if no explicit icon is provided
+    const ICON_COL_W = 90;   // px per column
+    const ICON_ROW_H = 100;  // px per icon slot
+    const ICON_RIGHT_PAD = 24; // px gap from right edge
+    const availableH = window.innerHeight - 22; // below menubar
+    const iconsPerCol = Math.max(1, Math.floor(availableH / ICON_ROW_H));
+
+    const desktopIcons = <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+        { (desktopConfig || []).map((item, idx) => {
+            const col = Math.floor(idx / iconsPerCol);
+            const row = idx % iconsPerCol;
+            const rightPx = ICON_RIGHT_PAD + col * ICON_COL_W;
+            const topPx  = 22 + row * ICON_ROW_H;
+
             const scriptKey = (item.script || '').toString().toLowerCase();
             const defaultIconFor = (key) => {
                 if (!key) return siteIcon;
@@ -222,8 +241,6 @@ const WM = () => {
                 if (key.includes('portfolio')) return siteIcon;
                 return siteIcon;
             };
-            // allow desktop.ini to specify an icon by filename (e.g. "chat.png")
-            // map common filenames to the imported assets so the client can resolve them
             const namedIcons = {
                 'chat.png': chatIcon,
                 'portfolio.png': siteIcon,
@@ -235,38 +252,34 @@ const WM = () => {
 
             let iconSrc;
             if (typeof item.icon === 'string' && item.icon.length > 0) {
-                // prefer a named import if available, otherwise use the string as a path
                 iconSrc = namedIcons[item.icon] || item.icon;
             } else if (item.icon) {
-                // item.icon might already be an imported asset
                 iconSrc = item.icon;
             } else {
                 iconSrc = defaultIconFor(scriptKey);
             }
             const appWidth = item.width || Math.round(practicalWidth - 40);
             const appHeight = item.height || (window.innerHeight - 60);
-            // center icon and label together and use a consistent right offset unless overridden
-            const rightOffset = item.rightOffset || 58;
-            // allow desktop.ini entries to specify an explicit start x/y for the window
             const startX = (typeof item.x === 'number') ? item.x : 20;
-            const startY = (typeof item.y === 'number') ? item.y : top;
+            const startY = (typeof item.y === 'number') ? item.y : 24;
             return (
                 <button key={idx}
                     onClick={() => { makeWindow(startX, startY, appHeight, appWidth, item.name, makeContentFromEntry(item, appWidth, appHeight)) }}
                     style={{
                         position: 'absolute',
-                        top: top + 'px',
-                        right: rightOffset + 'px',
+                        top: topPx + 'px',
+                        right: rightPx + 'px',
                         border: 'none',
                         background: 'none',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        width: '220px',
-                        padding: '6px',
-                        textAlign: 'center'
+                        width: ICON_COL_W + 'px',
+                        padding: '6px 0',
+                        textAlign: 'center',
+                        pointerEvents: 'all',
                     }}>
-                    <img src={iconSrc} style={{height: '64px', margin: '0 auto 6px', imageRendering: 'pixelated', display: 'block'}} alt={item.name}></img>
+                    <img src={iconSrc} style={{height: '48px', margin: '0 auto 4px', imageRendering: 'pixelated', display: 'block'}} alt={item.name} />
                     <h4
                         title={item.name}
                         style={{
@@ -277,7 +290,6 @@ const WM = () => {
                             display: 'inline-block',
                             backgroundColor: 'rgb(204, 204, 204)',
                             padding: '4px 8px',
-                            borderRadius: '0px'
                         }}
                     >{item.name}</h4>
                 </button>
