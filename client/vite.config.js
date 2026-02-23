@@ -114,6 +114,9 @@ function buildPathPlugin() {
             return {
                 build: {
                     outDir: BUILD_PATH || "build",
+                    // Don't wipe the output directory before building — prevents
+                    // permission errors on files like CNAME that live there permanently
+                    emptyOutDir: false,
                 },
             };
         },
