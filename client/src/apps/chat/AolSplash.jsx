@@ -25,21 +25,73 @@ const bevelIn = {
   borderColor: `${C.insetShadow} ${C.chromeLight} ${C.chromeLight} ${C.insetShadow}`,
 };
 
+// Usernames that require a password (lowercase for comparison)
+const PASSWORD_REQUIRED = new Set(['emma']);
+
+/** sha256(utf-8 string) → lowercase hex via Web Crypto */
+async function sha256Hex(str) {
+  const buf = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(str)
+  );
+  return Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 export default function AolSplash({ onSignOn }) {
   const [screenName, setScreenName] = useState(() => {
     try { return localStorage.getItem('chat.username') || ''; } catch (e) { return ''; }
   });
+  const [password, setPassword] = useState('');
   const [shake, setShake] = useState(false);
+  const [shakeField, setShakeField] = useState(null); // 'name' | 'password'
+  const [errorMsg, setErrorMsg] = useState('');
+  const [busy, setBusy] = useState(false);
   const inputRef = useRef(null);
+  const passwordRef = useRef(null);
 
-  const handleSignOn = () => {
+  const needsPassword = PASSWORD_REQUIRED.has(screenName.trim().toLowerCase());
+
+  const triggerShake = (field, msg = '') => {
+    setShakeField(field);
+    setErrorMsg(msg);
+    setTimeout(() => setShakeField(null), 500);
+    (field === 'password' ? passwordRef : inputRef).current?.focus();
+  };
+
+  const handleSignOn = async () => {
+    if (busy) return;
     const name = screenName.trim();
-    if (!name) {
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
-      inputRef.current?.focus();
-      return;
+    if (!name) { triggerShake('name'); return; }
+
+    if (needsPassword) {
+      if (!password) { triggerShake('password', 'Password required.'); return; }
+
+      setBusy(true);
+      setErrorMsg('');
+      try {
+        const hash = await sha256Hex(password);
+        const res = await fetch('/api/auth/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: name, hash }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          triggerShake('password', data.error || 'Incorrect password.');
+          setPassword('');
+          setBusy(false);
+          return;
+        }
+      } catch (e) {
+        triggerShake('password', 'Could not verify password. Try again.');
+        setBusy(false);
+        return;
+      }
+      setBusy(false);
     }
+
     try { localStorage.setItem('chat.username', name); } catch (e) {}
     onSignOn(name);
   };
@@ -71,29 +123,48 @@ export default function AolSplash({ onSignOn }) {
             <input
               ref={inputRef}
               value={screenName}
-              onChange={e => setScreenName(e.target.value)}
+              onChange={e => { setScreenName(e.target.value); setErrorMsg(''); }}
               onKeyDown={onKey}
               autoFocus
               maxLength={32}
               style={{
                 ...styles.textInput,
-                ...(shake ? styles.shakeTarget : {}),
+                ...(shakeField === 'name' ? styles.shakeTarget : {}),
               }}
             />
 
             <OS9Label style={{ marginTop: 10 }}>Password:</OS9Label>
             <input
+              ref={passwordRef}
               type="password"
-              disabled
-              placeholder="(not required)"
-              style={{ ...styles.textInput, color: C.chromeDark, cursor: 'not-allowed' }}
+              disabled={!needsPassword || busy}
+              placeholder={needsPassword ? '' : '(not required)'}
+              value={password}
+              onChange={e => { setPassword(e.target.value); setErrorMsg(''); }}
+              onKeyDown={onKey}
+              style={{
+                ...styles.textInput,
+                ...(!needsPassword ? { color: C.chromeDark, cursor: 'not-allowed' } : {}),
+                ...(shakeField === 'password' ? styles.shakeTarget : {}),
+              }}
             />
+
+            {errorMsg ? (
+              <div style={{
+                fontSize: '11px',
+                color: 'rgb(170,0,0)',
+                fontFamily: 'Charcoal, Arial, sans-serif',
+                marginTop: '4px',
+              }}>{errorMsg}</div>
+            ) : null}
 
             {/* Mac-style separator */}
             <div style={styles.separator} />
 
             <div style={styles.buttonRow}>
-              <OS9Button onClick={handleSignOn} primary>Sign On</OS9Button>
+              <OS9Button onClick={handleSignOn} primary disabled={busy}>
+                {busy ? 'Signing On…' : 'Sign On'}
+              </OS9Button>
             </div>
           </div>
 
@@ -176,12 +247,13 @@ function OS9Label({ children, style }) {
 }
 
 // ── OS9 button with press state ───────────────────────────────────────────────
-function OS9Button({ children, onClick, primary }) {
+function OS9Button({ children, onClick, primary, disabled }) {
   const [down, setDown] = useState(false);
   return (
     <button
-      onMouseDown={() => setDown(true)}
-      onMouseUp={() => { setDown(false); onClick?.(); }}
+      disabled={disabled}
+      onMouseDown={() => !disabled && setDown(true)}
+      onMouseUp={() => { setDown(false); if (!disabled) onClick?.(); }}
       onMouseLeave={() => setDown(false)}
       style={{
         fontFamily: 'Charcoal, Arial, sans-serif',
@@ -189,13 +261,13 @@ function OS9Button({ children, onClick, primary }) {
         minWidth: primary ? '88px' : '72px',
         padding: '3px 10px',
         backgroundColor: C.chrome,
-        color: C.black,
-        cursor: 'default',
+        color: disabled ? C.chromeDark : C.black,
+        cursor: disabled ? 'not-allowed' : 'default',
         outline: 'none',
         userSelect: 'none',
-        ...(down ? bevelIn : bevelOut),
+        ...(down && !disabled ? bevelIn : bevelOut),
         // default button — thick black outer ring
-        ...(primary ? { boxShadow: `0 0 0 2px ${C.black}` } : {}),
+        ...(primary ? { boxShadow: `0 0 0 2px ${disabled ? C.chromeDark : C.black}` } : {}),
       }}
     >
       {children}

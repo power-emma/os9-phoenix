@@ -71,6 +71,11 @@ function devServerPlugin() {
                             target: apiTarget,
                             changeOrigin: true,
                         },
+                        "/ws/chat": {
+                            target: apiTarget.replace(/^http/, "ws"),
+                            ws: true,
+                            changeOrigin: true,
+                        },
                     },
                     ...(https &&
                         SSL_CRT_FILE &&
