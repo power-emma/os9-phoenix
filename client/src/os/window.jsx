@@ -198,8 +198,8 @@ const Window = ({init, closeFunction }) => {
         display: "block",
         height: size.height + "px",
         width: size.width + "px",
-        left: x + "px",
-        top: y + "px",
+        left: 0,
+        top: 0,
         }} >
 
         <div style = {{display: "inline-block",  height: "100%", width:"100%", position: 'relative'}}>

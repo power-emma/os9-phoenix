@@ -30,6 +30,8 @@ const WM = ({ onReady }) => {
     const bumpZ = () => { maxZIndexRef.current += 1; return maxZIndexRef.current; };
     // Array of all windows
     const [windows, setWindows] = useState([]);
+    // Per-window draggable positions { [id]: {x, y} } — lets us snap on release
+    const [positions, setPositions] = useState({});
     // Reference to most updated copy of windows (used when calling from child)
     const windowRef = useRef();
     windowRef.current = windows
@@ -103,6 +105,9 @@ const WM = ({ onReady }) => {
               }}
                closeFunction={deleteWindow}
             />
+
+            // Seed the draggable position for this window
+            setPositions(prev => ({ ...prev, [newID]: { x: clampedX, y: clampedY } }));
 
             return [...prev, {
                 window: tempWin,
@@ -299,15 +304,32 @@ const WM = ({ onReady }) => {
 
 
     // Final HTML Code
+    const MENUBAR_H = 22;
     return <div >
         <div style= {{}}>
-            {windows.map((item) => (
-                <Draggable onMouseDown={() => {activeWindowHandler(item.id)}} handle="strong" >
-                <div style={{zIndex: item.zIndex, position: "absolute"}} zIndex={item.zIndex} onMouseDown={() => {activeWindowHandler(item.id)}}>
-                    {item.window}
-                </div>
-                </Draggable>
-            ))}
+            {windows.map((item) => {
+                const pos = positions[item.id] || { x: 0, y: MENUBAR_H };
+                return (
+                    <Draggable
+                        key={item.id}
+                        handle="strong"
+                        position={pos}
+                        onMouseDown={() => activeWindowHandler(item.id)}
+                        onDrag={(e, data) => {
+                            setPositions(prev => ({ ...prev, [item.id]: { x: data.x, y: data.y } }));
+                        }}
+                        onStop={(e, data) => {
+                            // Snap down if dragged above the menubar
+                            const snappedY = Math.max(MENUBAR_H, data.y);
+                            setPositions(prev => ({ ...prev, [item.id]: { x: data.x, y: snappedY } }));
+                        }}
+                    >
+                        <div style={{zIndex: item.zIndex, position: "absolute"}} onMouseDown={() => activeWindowHandler(item.id)}>
+                            {item.window}
+                        </div>
+                    </Draggable>
+                );
+            })}
         </div>
         {desktopIcons}
     </div>
