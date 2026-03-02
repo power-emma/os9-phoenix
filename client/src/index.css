@@ -31,20 +31,18 @@ code {
   font-family: Charcoal;
   font-display: swap;
   font-size: 13px;
-  z-index: 10;
 }
 
 .menubar__time {
   position: absolute;
   display: inline;
   right: 100px;
-  top: -1px;
+  top: 2px;
   background: transparent;
   border: none !important;
   font-family: Charcoal;
   font-display: swap;
   font-size: 13px;
-  z-index: 10;
 }
 
 .menubar__apple-button {
@@ -61,10 +59,6 @@ code {
   -webkit-font-smoothing: auto;
   background: transparent;
   border: none !important;
-  max-width: calc(100% - 200px);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .menubar__button--no-text {
@@ -75,7 +69,6 @@ code {
   font-family: Charcoal;
   font-display: swap;
   font-size: 13px;
-  white-space: nowrap;
 }
 
 .menubar {
@@ -106,5 +99,4 @@ code {
   float: right;
   -webkit-transform: scaleX(-1);
   transform: scaleX(-1);
-  z-index: 10;
 }
