@@ -58,7 +58,7 @@ const MenuBar = () => {
         <div className="menubar__right-header">
             <img src="headerdivider.png" style={{marginRight: "4px"}} />
             <img src="finder.png" />
-            <p className="menubar__button--no-text" style={{top: "-1px", left: "32px", display: "inline"}}>poweremma.com</p>
+            <p className="menubar__button--no-text" style={{top: "-1px", left: "32px", display: "inline"}}>power{''}emma.com</p>
         </div>
         <img className="menubar__right-corner" src="corner.png" />
   </div>
