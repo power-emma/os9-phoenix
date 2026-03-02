@@ -49,25 +49,11 @@
   }
   
   .menubar {
-    display: block;
+    display: inline;
     height: 20px;
-    width: 100%;
-    background-color: rgb(221, 221, 221) !important;
-    background: rgb(221, 221, 221) !important;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    /* iOS-specific fixes for background rendering */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    will-change: transform;
-    /* Force paint on iOS */
-    -webkit-perspective: 1000;
-    perspective: 1000;
+    background-color: rgb(221, 221, 221);
+    position:absolute;
+    display: block;
   }
   
   .menubar__left-corner {
