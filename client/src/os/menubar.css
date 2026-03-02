@@ -54,6 +54,11 @@
     background-color: rgb(221, 221, 221);
     position:absolute;
     display: block;
+    /* iOS-specific fixes for background rendering */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
   
   .menubar__left-corner {
