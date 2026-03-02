@@ -14,6 +14,7 @@ import Raycast from '../apps/raycast/raycast';
 import Plasma from '../apps/plasma/plasma';
 import Renderer from '../apps/3d/renderer';
 import Chat from '../apps/chat/chat';
+import ArmEmulator from '../apps/arm-emu/ArmEmulator';
 
 // Images
 import siteIcon from './icons/portfolio.png'
@@ -22,6 +23,7 @@ import raycastIcon from './icons/raycast.png'
 import plasmaIcon from './icons/plasma.png'
 import renderIcon from './icons/renderer.png'
 import chatIcon from './icons/chat.png'
+import armEmuIcon from './icons/arm-emu.png'
 
 
 const WM = ({ onReady }) => {
@@ -126,6 +128,7 @@ const WM = ({ onReady }) => {
         'chat':      (w,h) => <Chat     init={{width: w, height: h}} />,
         'plasma':    (w,h) => <Plasma   init={{width: w, height: h}} />,
         'renderer':  (w,h) => <Renderer init={{width: w, height: h}} />,
+        'arm-emu':   (w,h) => <ArmEmulator init={{width: w, height: h}} />,
     };
 
     // Parse the deep-link slug once at load time (e.g. /chat → 'chat')
@@ -244,6 +247,7 @@ const WM = ({ onReady }) => {
                 if (key.includes('plasma')) return plasmaIcon;
                 if (key.includes('render')) return renderIcon;
                 if (key.includes('portfolio')) return siteIcon;
+                if (key.includes('arm')) return armEmuIcon;
                 return siteIcon;
             };
             const namedIcons = {
@@ -252,7 +256,8 @@ const WM = ({ onReady }) => {
                 'orbit.png': orbitIcon,
                 'raycast.png': raycastIcon,
                 'plasma.png': plasmaIcon,
-                'renderer.png': renderIcon
+                'renderer.png': renderIcon,
+                'arm-emu.png': armEmuIcon
             };
 
             let iconSrc;

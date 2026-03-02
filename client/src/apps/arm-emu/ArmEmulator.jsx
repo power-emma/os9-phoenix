@@ -1,0 +1,1007 @@
+import React, { useState, useEffect, useRef } from 'react';
+import './ArmEmulator.css';
+
+// ARM Emulator React Component
+// Ported from C by Emma Power - 2026
+
+const ArmEmulator = ({ init }) => {
+    const [asmCode, setAsmCode] = useState('');
+    const [terminal, setTerminal] = useState([]);
+    const [registers, setRegisters] = useState(Array(17).fill(0));
+    const [memory, setMemory] = useState(new Uint8Array(65536));
+    const [currentInstruction, setCurrentInstruction] = useState(null);
+    const [currentLine, setCurrentLine] = useState(null);
+    const [isRunning, setIsRunning] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
+    const [instructionCount, setInstructionCount] = useState(0);
+    const [compiledCode, setCompiledCode] = useState(null);
+    const [debugInfo, setDebugInfo] = useState([]);
+    const [speed, setSpeed] = useState(20); // 20Hz default
+    const [pcToLineMap, setPcToLineMap] = useState({});
+    const [isPortrait, setIsPortrait] = useState(false);
+    
+    const intervalRef = useRef(null);
+    const codeEditorRef = useRef(null);
+    const codeDisplayRef = useRef(null);
+    const containerRef = useRef(null);
+    const executionStateRef = useRef({
+        registers: Array(17).fill(0),
+        memory: new Uint8Array(65536),
+        pc: 0,
+        halted: false,
+        terminal: []
+    });
+
+    // Utility function to isolate bytes from opcode
+    const byteIsolate = (opcode, position, size, offset) => {
+        const mask = (1 << size) - 1;
+        return (opcode >> ((size * position) + offset)) & mask;
+    };
+
+    // Read 32-bit word from memory (little-endian)
+    const readWord = (mem, address) => {
+        return ((mem[address + 3] << 24) | 
+               (mem[address + 2] << 16) |
+               (mem[address + 1] << 8) | 
+               mem[address]) >>> 0; // Convert to unsigned 32-bit
+    };
+
+    // Write 32-bit word to memory (little-endian)
+    const writeWord = (mem, address, value) => {
+        mem[address] = value & 0xFF;
+        mem[address + 1] = (value >> 8) & 0xFF;
+        mem[address + 2] = (value >> 16) & 0xFF;
+        mem[address + 3] = (value >> 24) & 0xFF;
+    };
+
+    // Compiler: Convert label name to address
+    const nameToAddress = (name, varNames, varAddresses) => {
+        if (!name || name === '') return -1;
+        for (let i = 0; i < varNames.length && varNames[i] != null; i++) {
+            if (varNames[i] === name) {
+                return varAddresses[i];
+            }
+        }
+        return -1;
+    };
+
+    // Compile ARM assembly to binary
+    const compileCode = (code) => {
+        const lines = code.split('\n');
+        const varNames = [];
+        const varAddresses = [];
+        const compiledInstructions = [];
+        const pcToLine = {}; // Map PC address to source line number
+        let currentLine = 0;
+        let nextVarAddress = 0;
+
+        // First pass: Find variables and labels
+        for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+            let line = lines[lineIdx];
+            
+            // Skip blank lines and comments
+            if (line.trim() === '' || line.trim().startsWith(';')) {
+                continue;
+            }
+
+            const tokens = line.split(/[\s,]+/).filter(t => t && !t.startsWith(';'));
+            if (tokens.length === 0) continue;
+
+            const firstToken = tokens[0];
+            
+            // Check if it's a label (lowercase start, ends with optional colon)
+            if (firstToken[0] >= 'a' && firstToken[0] <= 'z') {
+                const labelName = firstToken.replace(':', '');
+                varNames[nextVarAddress] = labelName;
+                varAddresses[nextVarAddress] = currentLine * 4;
+                console.log(`Label found: ${labelName} at address ${currentLine * 4} (line ${currentLine})`);
+                nextVarAddress++;
+                
+                // Handle string literals
+                if (line.includes('"')) {
+                    const stringMatch = line.match(/"([^"]*)"/);
+                    if (stringMatch) {
+                        const str = stringMatch[1];
+                        // Process escape sequences
+                        let processedStr = str.replace(/\\n/g, '\n')
+                                              .replace(/\\t/g, '\t')
+                                              .replace(/\\r/g, '\r')
+                                              .replace(/\\0/g, '\0');
+                        
+                        // Each character takes 4 bytes (word)
+                        currentLine += processedStr.length + 1; // +1 for null terminator
+                        continue;
+                    }
+                }
+                
+                // Handle hex constants (data, not code)
+                if (tokens.length > 1 && tokens[1].startsWith('0x')) {
+                    currentLine++;
+                    continue;
+                }
+                
+                // If there's an instruction after the label, it will be counted in next iteration
+                if (tokens.length === 1) {
+                    // Just a label alone, no instruction
+                    continue;
+                }
+                // Label with instruction - the instruction will count as currentLine
+            }
+            
+            currentLine++;
+        }
+
+        // Second pass: Assemble instructions
+        currentLine = 0;
+        for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+            let line = lines[lineIdx].trim();
+            const originalLine = lines[lineIdx];
+            
+            // Skip blank lines and comments
+            if (line === '' || line.startsWith(';')) continue;
+
+            // Remove inline comments
+            const commentIdx = line.indexOf(';');
+            if (commentIdx !== -1) {
+                line = line.substring(0, commentIdx).trim();
+            }
+
+            // Split by whitespace and commas, filter out empty strings
+            const tokens = line.split(/[\s,]+/).filter(t => t && t.trim() !== '');
+            if (tokens.length === 0) continue;
+            
+            let opcode = 0;
+            let operation = tokens[0];
+            let operandStartIdx = 1;
+
+            // Check if first token is a label
+            if (operation[0] >= 'a' && operation[0] <= 'z') {
+                // Map this PC to the source line for labels too
+                const pcAddress = currentLine * 4;
+                pcToLine[pcAddress] = lineIdx;
+                
+                if (tokens.length === 1) {
+                    // Just a label, no instruction
+                    continue;
+                }
+                
+                // Handle string data
+                if (originalLine.includes('"')) {
+                    const stringMatch = originalLine.match(/"([^"]*)"/);
+                    if (stringMatch) {
+                        const str = stringMatch[1];
+                        let processedStr = str.replace(/\\n/g, '\n')
+                                              .replace(/\\t/g, '\t')
+                                              .replace(/\\r/g, '\r')
+                                              .replace(/\\0/g, '\0');
+                        
+                        for (let char of processedStr) {
+                            compiledInstructions.push(char.charCodeAt(0));
+                            currentLine++;
+                        }
+                        compiledInstructions.push(0); // null terminator
+                        currentLine++;
+                        continue;
+                    }
+                }
+                
+                // Handle hex constants
+                if (tokens[1].startsWith('0x')) {
+                    opcode = parseInt(tokens[1], 16);
+                    compiledInstructions.push(opcode);
+                    currentLine++;
+                    continue;
+                }
+                
+                // Label with instruction on same line
+                operation = tokens[1];
+                operandStartIdx = 2;
+            } else {
+                // Map this PC to the source line
+                const pcAddress = currentLine * 4;
+                pcToLine[pcAddress] = lineIdx;
+            }
+
+            // Parse operands
+            const parseOperand = (token, currentLine, isBranch = false) => {
+                if (!token) return { value: 0, isReg: false };
+                
+                token = token.trim();
+                
+                // Check if it's a valid register (r followed by digits)
+                if (token.match(/^r\d+$/)) {
+                    return { value: parseInt(token.substring(1)), isReg: true };
+                } else if (token.startsWith('#')) {
+                    return { value: parseInt(token.substring(1)), isReg: false };
+                } else if (token.startsWith('[') && token.endsWith(']')) {
+                    const inner = token.substring(1, token.length - 1);
+                    return { value: parseInt(inner), isReg: false };
+                } else if (token.startsWith('0x')) {
+                    return { value: parseInt(token, 16), isReg: false };
+                } else {
+                    // It's a label
+                    const globalAddress = nameToAddress(token, varNames, varAddresses);
+                    console.log(`Looking up label "${token}", found address: ${globalAddress}, isBranch: ${isBranch}`);
+                    if (globalAddress !== -1) {
+                        if (isBranch) {
+                            // For branches: offset in words, accounting for PC being 2 instructions ahead
+                            const relativeAddress = (globalAddress - (currentLine * 4) - 8) / 4;
+                            console.log(`Branch from PC=${currentLine*4} to ${globalAddress}, offset=${relativeAddress} (calculation: (${globalAddress} - ${currentLine*4} - 8) / 4)`);
+                            return { value: relativeAddress, isReg: false };
+                        } else {
+                            const relativeAddress = globalAddress - (currentLine * 4);
+                            return { value: relativeAddress, isReg: false };
+                        }
+                    }
+                    console.log(`Label "${token}" not found, returning 0`);
+                    return { value: 0, isReg: false };
+                }
+            };
+
+            const o1 = tokens[operandStartIdx] ? parseOperand(tokens[operandStartIdx], currentLine, false) : { value: 0, isReg: false };
+            const o2 = tokens[operandStartIdx + 1] ? parseOperand(tokens[operandStartIdx + 1], currentLine, false) : { value: 0, isReg: false };
+            const o3 = tokens[operandStartIdx + 2] ? parseOperand(tokens[operandStartIdx + 2], currentLine, false) : { value: 0, isReg: false };
+
+            // Check for barrel shifter
+            let shift = 0;
+            if (tokens[operandStartIdx + 2]) {
+                const shiftOp = tokens[operandStartIdx + 2].toUpperCase();
+                let shiftType = 0;
+                if (shiftOp === 'LSL') shiftType = 0x00;
+                else if (shiftOp === 'LSR') shiftType = 0x01;
+                else if (shiftOp === 'ASR') shiftType = 0x02;
+                else if (shiftOp === 'ROR') shiftType = 0x03;
+                
+                if (tokens[operandStartIdx + 3] && tokens[operandStartIdx + 3].startsWith('#')) {
+                    const shiftAmount = parseInt(tokens[operandStartIdx + 3].substring(1));
+                    shift = (shiftType << 5) | (shiftAmount << 7);
+                    console.log(`Shift detected: op=${shiftOp}, type=${shiftType}, amount=${shiftAmount}, encoded shift=0x${shift.toString(16)}, tokens=${JSON.stringify(tokens)}`);
+                }
+            }
+
+            // Encode instruction
+            switch (operation.toUpperCase()) {
+                case 'AND':
+                    opcode = o3.isReg ? 0x12000000 : 0x10000000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'EOR':
+                    opcode = o3.isReg ? 0x12200000 : 0x10200000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'SUB':
+                    opcode = o3.isReg ? 0x12400000 : 0x10400000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'RSB':
+                    opcode = o3.isReg ? 0x12600000 : 0x10600000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'ADD':
+                    opcode = o3.isReg ? 0x12800000 : 0x10800000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'ADC':
+                    opcode = o3.isReg ? 0x12A00000 : 0x10A00000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'SBC':
+                    opcode = o3.isReg ? 0x12C00000 : 0x10C00000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'RSC':
+                    opcode = o3.isReg ? 0x12E00000 : 0x10E00000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'TST':
+                    opcode = o3.isReg ? 0x13000000 : 0x11000000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'TEQ':
+                    opcode = o3.isReg ? 0x13200000 : 0x11200000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'CMP':
+                    opcode = !o2.isReg ? 0x13400000 : 0x11400000;
+                    opcode += o1.value * 0x10000 + o2.value;
+                    break;
+                case 'CMN':
+                    opcode = o3.isReg ? 0x13600000 : 0x11600000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'ORR':
+                    opcode = o3.isReg ? 0x13800000 : 0x11800000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'MOV':
+                    opcode = o2.isReg ? 0x13A00000 : 0x11A00000;
+                    opcode += o1.value * 0x1000 + o2.value + shift;
+                    if (shift > 0) {
+                        console.log(`MOV with shift at line ${lineIdx}: o1=${o1.value}, o2=${o2.value}, shift=0x${shift.toString(16)}, final opcode=0x${(opcode >>> 0).toString(16)}, tokens=${JSON.stringify(tokens)}`);
+                    }
+                    break;
+                case 'BIC':
+                    opcode = o3.isReg ? 0x13C00000 : 0x11C00000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'MVN':
+                    opcode = o3.isReg ? 0x13E00000 : 0x11E00000;
+                    opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
+                    break;
+                case 'LDR':
+                    opcode = o2.isReg ? 0x15D00000 : 0x17D00000;
+                    opcode += o1.value * 0x1000 + o2.value;
+                    break;
+                case 'STR':
+                    opcode = o2.isReg ? 0x17E00000 : 0x15E00000;
+                    opcode += o1.value * 0x1000 + o2.value;
+                    break;
+                case 'HLT':
+                    opcode = 0xD4400000;
+                    break;
+                case 'B': {
+                    const branchOffset = parseOperand(tokens[operandStartIdx], currentLine, true);
+                    opcode = 0xEA000000;
+                    opcode |= (branchOffset.value & 0xFFFFFF);
+                    console.log(`Compiling B at line ${lineIdx}, PC=${currentLine*4}, tokens=${JSON.stringify(tokens)}, operandStartIdx=${operandStartIdx}, target=${tokens[operandStartIdx]}, offset=${branchOffset.value}, opcode=0x${opcode.toString(16)}`);
+                    break;
+                }
+                case 'BEQ': {
+                    const branchOffset = parseOperand(tokens[operandStartIdx], currentLine, true);
+                    opcode = 0x0A000000;
+                    opcode |= (branchOffset.value & 0xFFFFFF);
+                    console.log(`Compiling BEQ at line ${lineIdx}, PC=${currentLine*4}, target=${tokens[operandStartIdx]}, offset=${branchOffset.value}`);
+                    break;
+                }
+                case 'BNE': {
+                    const branchOffset = parseOperand(tokens[operandStartIdx], currentLine, true);
+                    opcode = 0x1A000000;
+                    opcode |= (branchOffset.value & 0xFFFFFF);
+                    console.log(`Compiling BNE at line ${lineIdx}, PC=${currentLine*4}, target=${tokens[operandStartIdx]}, offset=${branchOffset.value}`);
+                    break;
+                }
+                case 'BHS': {
+                    const branchOffset = parseOperand(tokens[operandStartIdx], currentLine, true);
+                    opcode = 0x2A000000;
+                    opcode |= (branchOffset.value & 0xFFFFFF);
+                    break;
+                }
+                case 'BLO': {
+                    const branchOffset = parseOperand(tokens[operandStartIdx], currentLine, true);
+                    opcode = 0x3A000000;
+                    opcode |= (branchOffset.value & 0xFFFFFF);
+                    break;
+                }
+                default:
+                    console.warn('Unknown operation:', operation);
+                    currentLine++;
+                    continue;
+            }
+
+            compiledInstructions.push(opcode);
+            currentLine++;
+        }
+
+        return { instructions: compiledInstructions, pcToLine };
+    };
+
+    // Load compiled code into memory
+    const loadIntoMemory = (compiled) => {
+        const newMemory = new Uint8Array(65536);
+        let address = 0;
+        
+        for (let instruction of compiled) {
+            writeWord(newMemory, address, instruction);
+            if (address === 72) {
+                console.log(`Writing to PC=72: instruction=0x${(instruction >>> 0).toString(16)}`);
+                const readBack = readWord(newMemory, address);
+                console.log(`Read back from PC=72: instruction=0x${readBack.toString(16)}`);
+            }
+            address += 4;
+        }
+        
+        return newMemory;
+    };
+
+    // Execute one instruction
+    const executeInstruction = (state) => {
+        const { registers: regs, memory: mem } = state;
+        const pc = regs[15];
+        
+        if (pc >= 65536 || state.halted) {
+            state.halted = true;
+            return;
+        }
+
+        const instruction = readWord(mem, pc);
+        console.log(`Executing at PC=${pc}: instruction=0x${(instruction >>> 0).toString(16).padStart(8, '0')}`);
+        
+        // HLT instruction
+        if (instruction === 0xD4400000) {
+            state.halted = true;
+            return;
+        }
+
+        let debugMsg = `PC:${(pc/4).toString().padStart(3, '0')} [0x${instruction.toString(16).padStart(8, '0').toUpperCase()}] `;
+
+        // Data Processing Instruction (bits 27-26 = 00 or 01, bit 25 varies)
+        if ((instruction & 0x0C000000) === 0x00000000) {
+            const opcode = byteIsolate(instruction, 5, 4, 1);
+            const operand1 = byteIsolate(instruction, 4, 4, 0);
+            const operand2 = byteIsolate(instruction, 0, 12, 0);
+            const destination = byteIsolate(instruction, 3, 4, 0);
+            const immBit = (instruction >> 25) & 1;
+
+            const opcodeNames = ['AND', 'EOR', 'SUB', 'RSB', 'ADD', 'ADC', 'SBC', 'RSC',
+                               'TST', 'TEQ', 'CMP', 'CMN', 'ORR', 'MOV', 'BIC', 'MVN'];
+            debugMsg += `${opcodeNames[opcode]} `;
+
+            switch (opcode) {
+                case 0: // AND
+                    regs[destination] = immBit ? regs[operand1] & regs[operand2] : regs[operand1] & operand2;
+                    break;
+                case 1: // EOR
+                    regs[destination] = immBit ? regs[operand1] ^ regs[operand2] : regs[operand1] ^ operand2;
+                    break;
+                case 2: // SUB
+                    regs[destination] = immBit ? regs[operand1] - regs[operand2] : regs[operand1] - operand2;
+                    break;
+                case 3: // RSB
+                    regs[destination] = immBit ? regs[operand2] - regs[operand1] : operand2 - regs[operand1];
+                    break;
+                case 4: // ADD
+                    regs[destination] = immBit ? regs[operand1] + regs[operand2] : regs[operand1] + operand2;
+                    break;
+                case 5: // ADC
+                    regs[destination] = immBit ? regs[operand1] + regs[operand2] : regs[operand1] + operand2;
+                    break;
+                case 6: // SBC
+                    regs[destination] = immBit ? regs[operand1] - regs[operand2] : regs[operand1] - operand2;
+                    break;
+                case 7: // RSC
+                    regs[destination] = immBit ? regs[operand2] - regs[operand1] : operand2 - regs[operand1];
+                    break;
+                case 8: // TST
+                    break;
+                case 9: // TEQ
+                    break;
+                case 10: // CMP
+                    const cmpResult = immBit ? regs[operand1] - operand2 : regs[operand1] - regs[operand2];
+                    // Z flag
+                    if (cmpResult === 0) regs[16] |= 0x40000000;
+                    else regs[16] &= 0xBFFFFFFF;
+                    // N flag
+                    if (cmpResult < 0) regs[16] |= 0x80000000;
+                    else regs[16] &= 0x7FFFFFFF;
+                    // C flag
+                    if (immBit) {
+                        if (regs[operand1] >= operand2) regs[16] |= 0x20000000;
+                        else regs[16] &= 0xDFFFFFFF;
+                    } else {
+                        if (regs[operand1] >= regs[operand2]) regs[16] |= 0x20000000;
+                        else regs[16] &= 0xDFFFFFFF;
+                    }
+                    break;
+                case 11: // CMN
+                    break;
+                case 12: // ORR
+                    regs[destination] = immBit ? regs[operand1] | regs[operand2] : regs[operand1] | operand2;
+                    break;
+                case 13: // MOV
+                    regs[destination] = immBit ? regs[operand2 % 16] : operand2;
+                    break;
+                case 14: // BIC
+                    regs[destination] = immBit ? regs[operand1] & ~regs[operand2] : regs[operand1] & ~operand2;
+                    break;
+                case 15: // MVN
+                    regs[destination] = immBit ? ~regs[operand2] : ~operand2;
+                    break;
+            }
+
+            // Handle shifts (only for register operands, not immediates)
+            const shiftType = byteIsolate(instruction, 0, 2, 5);
+            const shiftAmount = byteIsolate(instruction, 0, 5, 7);
+            
+            if (shiftAmount > 0 && immBit === 1) {
+                console.log(`Applying shift: type=${shiftType}, amount=${shiftAmount}, destination=r${destination}, before=${regs[destination].toString(16)}`);
+                switch (shiftType) {
+                    case 0: // LSL
+                        regs[destination] = regs[destination] << shiftAmount;
+                        break;
+                    case 1: // LSR
+                        regs[destination] = regs[destination] >>> shiftAmount;
+                        break;
+                    case 2: // ASR
+                        regs[destination] = regs[destination] >> shiftAmount;
+                        break;
+                    case 3: // ROR
+                        regs[destination] = (regs[destination] >>> shiftAmount) | (regs[destination] << (32 - shiftAmount));
+                        break;
+                }
+                console.log(`After shift: ${regs[destination].toString(16)}`);
+            }
+        }
+        // Load/Store Instruction
+        else if ((instruction & 0x0C000000) === 0x04000000) {
+            const loadBit = (instruction >> 20) & 1;
+            const immBit = (instruction >> 25) & 1;
+            let offset = byteIsolate(instruction, 0, 12, 0);
+            const destination = byteIsolate(instruction, 3, 4, 0);
+
+            debugMsg += loadBit ? 'LDR ' : 'STR ';
+
+            if (loadBit) {
+                // Load
+                if (!immBit) {
+                    offset = readWord(mem, regs[offset]);
+                } else {
+                    offset = readWord(mem, regs[15] + offset);
+                }
+                regs[destination] = offset;
+            } else {
+                // Store
+                const address = (regs[offset] >>> 0); // Convert to unsigned
+                if (address >= 0xF0000000) {
+                    // UART TX_FIFO
+                    if (address === 0xF0000000) {
+                        const char = String.fromCharCode(regs[destination] & 0xFF);
+                        state.terminal.push(char);
+                    }
+                } else {
+                    writeWord(mem, address, regs[destination]);
+                }
+            }
+        }
+        // Branch Instruction
+        else if ((instruction & 0x0E000000) === 0x0A000000) {
+            const type = byteIsolate(instruction, 7, 4, 0);
+            let offset = (instruction << 8) >> 8; // Sign extend 24-bit
+            // offset is in words, convert to bytes
+            offset = offset * 4;
+            
+            debugMsg += 'BRANCH ';
+
+            let shouldBranch = false;
+            switch (type) {
+                case 0x0: // BEQ
+                    shouldBranch = (regs[16] & 0x40000000) !== 0;
+                    debugMsg += 'EQ ';
+                    break;
+                case 0x1: // BNE
+                    shouldBranch = (regs[16] & 0x40000000) === 0;
+                    debugMsg += 'NE ';
+                    break;
+                case 0x2: // BHS
+                    shouldBranch = (regs[16] & 0x20000000) !== 0;
+                    debugMsg += 'HS ';
+                    break;
+                case 0x3: // BLO
+                    shouldBranch = (regs[16] & 0x20000000) === 0;
+                    debugMsg += 'LO ';
+                    break;
+                case 0xE: // B (unconditional)
+                    shouldBranch = true;
+                    debugMsg += 'UNCOND ';
+                    break;
+            }
+
+            if (shouldBranch) {
+                // PC is currently at this instruction
+                // ARM convention: branch offset is relative to PC+8 (pipeline)
+                // But we handle this in compilation, so just apply the offset
+                const targetPC = regs[15] + offset + 8;
+                regs[15] = targetPC - 4; // -4 because we increment by 4 at the end
+                debugMsg += `taken to ${regs[15] + 4}`;
+            } else {
+                debugMsg += 'not taken';
+            }
+        }
+
+        // Increment PC
+        regs[15] += 4;
+        
+        return debugMsg;
+    };
+
+    // Compile button handler
+    const handleCompile = () => {
+        try {
+            const compiled = compileCode(asmCode);
+            setCompiledCode(compiled.instructions);
+            setPcToLineMap(compiled.pcToLine);
+            setTerminal([]);
+            setDebugInfo([`Compiled ${compiled.instructions.length} instructions`]);
+            console.log(`Instruction at index 18 (PC=72): 0x${(compiled.instructions[18] >>> 0).toString(16)}`);
+            
+            // Reset state
+            const newMemory = loadIntoMemory(compiled.instructions);
+            const newRegs = Array(17).fill(0);
+            
+            executionStateRef.current = {
+                registers: newRegs,
+                memory: newMemory,
+                pc: 0,
+                halted: false,
+                terminal: []
+            };
+            
+            setRegisters([...newRegs]);
+            setMemory(newMemory);
+            setCurrentInstruction(null);
+            setCurrentLine(null);
+            setInstructionCount(0);
+            setIsRunning(false);
+            setIsPaused(false);
+        } catch (error) {
+            setDebugInfo([`Compilation error: ${error.message}`]);
+        }
+    };
+
+    // Run/Pause toggle
+    const handleRunPause = () => {
+        if (!compiledCode) return;
+        
+        if (isRunning) {
+            setIsPaused(!isPaused);
+        } else {
+            setIsRunning(true);
+            setIsPaused(false);
+        }
+    };
+
+    // Reset execution
+    const handleReset = () => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+        }
+        
+        if (compiledCode) {
+            const newMemory = loadIntoMemory(compiledCode);
+            const newRegs = Array(17).fill(0);
+            
+            executionStateRef.current = {
+                registers: newRegs,
+                memory: newMemory,
+                pc: 0,
+                halted: false,
+                terminal: []
+            };
+            
+            setRegisters([...newRegs]);
+            setMemory(newMemory);
+            setTerminal([]);
+            setDebugInfo([]);
+            setCurrentInstruction(null);
+            setCurrentLine(null);
+            setInstructionCount(0);
+            setIsRunning(false);
+            setIsPaused(false);
+        }
+    };
+
+    // Step one instruction
+    const handleStep = () => {
+        if (!compiledCode || executionStateRef.current.halted) return;
+        
+        const debugMsg = executeInstruction(executionStateRef.current);
+        const pc = executionStateRef.current.registers[15] - 4;
+        
+        setRegisters([...executionStateRef.current.registers]);
+        setTerminal([...executionStateRef.current.terminal]);
+        setInstructionCount(prev => prev + 1);
+        setCurrentInstruction(pc);
+        setCurrentLine(pcToLineMap[pc] ?? null);
+        
+        if (debugMsg) {
+            setDebugInfo(prev => [...prev.slice(-20), debugMsg]);
+        }
+        
+        if (executionStateRef.current.halted) {
+            setIsRunning(false);
+            setDebugInfo(prev => [...prev, 'CPU HALTED']);
+        }
+    };
+
+    // Execution loop at specified Hz
+    useEffect(() => {
+        if (isRunning && !isPaused && compiledCode) {
+            const interval = 1000 / speed; // Convert Hz to ms
+            
+            intervalRef.current = setInterval(() => {
+                if (executionStateRef.current.halted) {
+                    clearInterval(intervalRef.current);
+                    setIsRunning(false);
+                    setDebugInfo(prev => [...prev, 'CPU HALTED']);
+                    return;
+                }
+                
+                const debugMsg = executeInstruction(executionStateRef.current);
+                const pc = executionStateRef.current.registers[15] - 4;
+                
+                setRegisters([...executionStateRef.current.registers]);
+                setTerminal([...executionStateRef.current.terminal]);
+                setInstructionCount(prev => prev + 1);
+                setCurrentInstruction(pc);
+                setCurrentLine(pcToLineMap[pc] ?? null);
+                
+                if (debugMsg) {
+                    setDebugInfo(prev => [...prev.slice(-20), debugMsg]);
+                }
+            }, interval);
+            
+            return () => {
+                if (intervalRef.current) {
+                    clearInterval(intervalRef.current);
+                }
+            };
+        } else {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        }
+    }, [isRunning, isPaused, compiledCode, speed]);
+
+    // Load default program
+    useEffect(() => {
+        const defaultProgram = `; Hex Fibonacci Printer - Emma Power - October 22, 2025
+; Start of Program
+start   MOV r0, #0
+        ADD r0, r15, intro
+        B print
+resume  LDR r1, mask
+        LDR r4, tx_fifo
+        MOV r8, #1
+        MOV r9, #0
+
+fib     LDR r13, sp_st
+        LDR r5, sp_st
+        ADD r5, r5, #4
+        ADD r6, r6, #1
+        ADD r10, r9, r8
+        MOV r8, r9
+        MOV r9, r10
+        MOV r0, r10
+
+loopa   AND r2, r1, r0
+        STR r2, r13
+        SUB r13, r13, #4
+        MOV r0, r0, LSR #4
+        CMP r0, #0
+        BNE loopa
+        ADD r13, r13, #4
+
+loopc   CMP r13, r5
+        BEQ end
+        LDR r2, r13
+        ADD r13, r13, #4
+        CMP r2, #10
+        BHS letter
+number  ADD r2, r2, #48
+        STR r2, r4
+        B loopc
+letter  ADD r2, r2, #55
+        STR r2, r4
+        B loopc
+
+end     MOV r2, #10
+        STR r2, r4
+        CMP r6, #10
+        BNE fib
+        HLT
+
+print           LDR r2, tx_fifo
+                MOV r3, #0
+print_loop      ADD r3, r3, #4
+                LDR r1, r0
+                CMP r1, #0
+                BEQ print_end
+                STR r1, r2
+                ADD r0, r0, #4
+                B print_loop
+print_end       B resume
+
+intro  "The first 10 fibonacci numbers are:\\n"
+mask    0x0000000F
+sp_st   0x00000100
+tx_fifo 0xF0000000`;
+        
+        setAsmCode(defaultProgram);
+    }, []);
+
+    // Check for portrait mode based on container dimensions
+    useEffect(() => {
+        const checkOrientation = () => {
+            if (containerRef.current) {
+                const { width, height } = containerRef.current.getBoundingClientRect();
+                // Portrait if height > width or width is too narrow
+                const portrait = height > width || width <= 900;
+                setIsPortrait(portrait);
+            }
+        };
+
+        checkOrientation();
+        
+        // Use ResizeObserver to watch container size changes
+        const resizeObserver = new ResizeObserver(() => {
+            checkOrientation();
+        });
+        
+        if (containerRef.current) {
+            resizeObserver.observe(containerRef.current);
+        }
+
+        return () => {
+            resizeObserver.disconnect();
+        };
+    }, []);
+
+    return (
+        <div className="arm-emulator" ref={containerRef}>
+            <div className="emu-header">
+                <h2>ARM Emulator</h2>
+                <div className="controls">
+                    <button onClick={handleCompile}>Compile</button>
+                    <button onClick={handleRunPause} disabled={!compiledCode}>
+                        {isRunning ? (isPaused ? 'Resume' : 'Pause') : 'Run'}
+                    </button>
+                    <button onClick={handleStep} disabled={!compiledCode || (isRunning && !isPaused)}>Step</button>
+                    <button onClick={handleReset} disabled={!compiledCode}>Reset</button>
+                    <label>
+                        Speed: {speed}Hz
+                        <input 
+                            type="range" 
+                            min="1" 
+                            max="100" 
+                            value={speed} 
+                            onChange={(e) => setSpeed(parseInt(e.target.value))}
+                        />
+                    </label>
+                </div>
+            </div>
+            
+            <div className="emu-content" style={isPortrait ? {
+                flexDirection: 'column',
+                width: '100%',
+                height: '100%'
+            } : {}}>
+                {isPortrait ? (
+                    <>
+                        {/* Portrait: Terminal first, then code */}
+                        <div className="execution-panel" style={{
+                            flex: '0 0 50%',
+                            width: '100%',
+                            borderBottom: '2px solid #999999',
+                            borderRight: 'none',
+                            maxHeight: '50%',
+                            minHeight: 0
+                        }}>
+                            <div className="terminal-section" style={{
+                                flex: '1 1 100%',
+                                minHeight: 0,
+                                borderBottom: 'none',
+                                height: '100%',
+                                maxHeight: '100%'
+                            }}>
+                                <h3>Terminal Output</h3>
+                                <div className="terminal" style={{
+                                    flex: 1,
+                                    minHeight: 0
+                                }}>
+                                    {terminal.join('')}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="code-panel" style={{
+                            flex: '0 0 50%',
+                            width: '100%',
+                            borderRight: 'none',
+                            borderTop: 'none',
+                            maxHeight: '50%',
+                            minHeight: 0
+                        }}>
+                            <h3>Assembly Code</h3>
+                            <div 
+                                ref={codeDisplayRef}
+                                className="code-editor-container"
+                            >
+                                {asmCode.split('\n').map((line, idx) => (
+                                    <div
+                                        key={idx}
+                                        className={`code-line ${currentLine === idx ? 'active-line' : ''}`}
+                                    >
+                                        <span className="line-number">{(idx + 1).toString().padStart(3, ' ')}</span>
+                                        <span className="line-content">{line || ' '}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <textarea
+                                ref={codeEditorRef}
+                                value={asmCode}
+                                onChange={(e) => setAsmCode(e.target.value)}
+                                onScroll={(e) => {
+                                    if (codeDisplayRef.current) {
+                                        codeDisplayRef.current.scrollTop = e.target.scrollTop;
+                                        codeDisplayRef.current.scrollLeft = e.target.scrollLeft;
+                                    }
+                                }}
+                                spellCheck={false}
+                                className="code-editor-overlay"
+                            />
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        {/* Landscape: Code first, then execution panel with all sections */}
+                        <div className="code-panel">
+                            <h3>Assembly Code</h3>
+                            <div 
+                                ref={codeDisplayRef}
+                                className="code-editor-container"
+                            >
+                                {asmCode.split('\n').map((line, idx) => (
+                                    <div
+                                        key={idx}
+                                        className={`code-line ${currentLine === idx ? 'active-line' : ''}`}
+                                    >
+                                        <span className="line-number">{(idx + 1).toString().padStart(3, ' ')}</span>
+                                        <span className="line-content">{line || ' '}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <textarea
+                                ref={codeEditorRef}
+                                value={asmCode}
+                                onChange={(e) => setAsmCode(e.target.value)}
+                                onScroll={(e) => {
+                                    if (codeDisplayRef.current) {
+                                        codeDisplayRef.current.scrollTop = e.target.scrollTop;
+                                        codeDisplayRef.current.scrollLeft = e.target.scrollLeft;
+                                    }
+                                }}
+                                spellCheck={false}
+                                className="code-editor-overlay"
+                            />
+                        </div>
+                        
+                        <div className="execution-panel">
+                            <div className="terminal-section">
+                                <h3>Terminal Output</h3>
+                                <div className="terminal">
+                                    {terminal.join('')}
+                                </div>
+                            </div>
+                            
+                            <div className="registers-section">
+                                <h3>Registers</h3>
+                                <div className="registers">
+                                    {registers.slice(0, 16).map((val, idx) => (
+                                        <div key={idx} className="register">
+                                            <span className="reg-name">r{idx}:</span>
+                                            <span className="reg-value">0x{(val >>> 0).toString(16).padStart(8, '0')}</span>
+                                        </div>
+                                    ))}
+                                    <div className="register">
+                                        <span className="reg-name">PSR:</span>
+                                        <span className="reg-value">0x{(registers[16] >>> 0).toString(16).padStart(8, '0')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="debug-section">
+                                <h3>Execution ({instructionCount} instructions)</h3>
+                                <div className="debug-output">
+                                    {debugInfo.map((line, idx) => (
+                                        <div key={idx} className="debug-line">{line}</div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default ArmEmulator;

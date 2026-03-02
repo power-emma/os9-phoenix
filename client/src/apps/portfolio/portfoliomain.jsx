@@ -318,6 +318,35 @@ const PortfolioMain = ({init}) => {
             </div>
         </div>
 
+
+<div className = "h-75 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", marginTop: "50px"}}>
+            <div className = "col-sm-2 d-flex justify-content-center"> 
+
+            </div>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px", background: "rgba(0, 0, 0, 0.6)", position: "relative", overflow: "hidden"}} >
+                <ShootingStars seed={98765} />
+                <div className = "h-25 d-flex align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
+                    <h1 style={{fontSize: h2Size}}>ARM Assembler and Emulator</h1>
+                </div>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline', position: "relative", zIndex: 1}}>
+                    <p style={{fontSize: heropSize}} >A small ARM assembler and emulator, packaged into one web-based IDE. While it was written in C originally, porting it into JS was harder than writing the emulator itself. This is impressive to the right kind of nerd.</p>
+                </div>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
+                    <p style={{fontSize: heropSize}}> Tip: ... I need to write a book to give a good tip here</p>
+                </div>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1, gap: "5vw"}}>
+                    <a className="gradbutton" href='https://github.com/power-emma/Neurotic'>Neurotic (Assembler)</a>
+                    <a className="gradbutton" href='https://github.com/power-emma/Tranquil'>Tranquil (Emulator)</a>
+                </div>
+                <br/>
+                <p style={{position: "relative", zIndex: 1}}>Date Created: November 2025 | Date Ported: March 2026</p>
+                <br/>
+            </div>
+            <div className = "col-sm-2 d-flex justify-content-center align-items-center">
+                
+            </div>
+        </div>
+
         <div className = "h-75 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", marginTop: "50px"}}>
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
