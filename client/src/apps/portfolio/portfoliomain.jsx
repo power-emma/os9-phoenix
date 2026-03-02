@@ -4,6 +4,8 @@ import "react-photo-album/rows.css";
 import background from './background.png'
 import emma from "./emma.webp"
 import './portfolio.css'
+import PlasmaBackground from './PlasmaBackground'
+import ShootingStars from './ShootingStars'
 
 // Photo arrays are constant — defined outside the component so they are never recreated on re-render
 const favPics = [
@@ -113,7 +115,7 @@ const PortfolioMain = ({init}) => {
 
     // Get size dependent font sizes
     // Prefer CSS-driven scaling for many things; compute a few fallbacks
-    let imgHeight = Math.round(height / (mobile ? 2.6 : 1.5)) + "px"
+    let imgHeight = Math.round(height / (mobile ? 2.6 : 1.7)) + "px"
     let headerSize = (2 * em) + "em"
     let h1Size = (3.6 * em) + "em"
     let h2Size = (2.6 * em) + "em"
@@ -126,23 +128,46 @@ const PortfolioMain = ({init}) => {
     const [activePicSet, setActivePicSet] = useState({ arr: favPics, name: "Emma's Film Photos", description: "Somehow, humanity managed to gain the power to create an exact likeness of any scene in an instant, before we figured out how to make a cardboard box" });
 
     // Header HTML
-    let header = <div className = "h-25 d-flex align-items-center" style={{color: "white", fontFamily: "Charcoal", width: "100%"}}>
-        <div style={{flex: "0 0 auto", padding: "2vh 2%"}}> 
-            <h1 style={{fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", margin: 0, whiteSpace: "nowrap"}}> Emma Power </h1>
+    let header = <div className = "h-25 d-flex align-items-center" style={{
+        color: "white", 
+        fontFamily: "Charcoal", 
+        width: "100%", 
+        paddingTop: "1.5vh",
+        background: "rgba(0, 0, 0, 0.7)",
+        position: "relative"
+    }}>
+        <div style={{flex: "0 0 auto", padding: "2vh 3%"}}> 
+            <h1 style={{fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", margin: 0, whiteSpace: "nowrap"}}> Emma Power </h1>
         </div>
         <div style={{flex: 1}} />
-        <div className = "d-flex justify-content-end align-items-center" style={{padding: "2vh 2%", gap: "1.5em"}}>
+        <div className = "d-flex justify-content-end align-items-center" style={{padding: "2vh 3%", gap: "1.5em"}}>
             <h1 style={{fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer", margin: 0, whiteSpace: "nowrap"}} onClick={() => setCurrentPage("Home")}>Home</h1>
             <h1 style={{fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer", margin: 0, whiteSpace: "nowrap"}} onClick={() => setCurrentPage("Projects")}>Projects</h1>
             <h1 style={{fontSize: headerSize, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", cursor: "pointer", margin: 0, whiteSpace: "nowrap"}} onClick={() => setCurrentPage("Photos")}>Photos</h1>
         </div>
+        <div style={{
+            position: "absolute",
+            bottom: "-100px",
+            left: 0,
+            right: 0,
+            height: "100px",
+            background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 100%)",
+            pointerEvents: "none",
+            zIndex: -1
+        }} />
     </div>
 
     // Special Formatting if mobile
     if (mobile) {
-        header = <div className = "h-25 d-flex justify-content-center " style={{color: "white", fontFamily: "Charcoal",}}>
+        header = <div className = "h-25 d-flex justify-content-center " style={{
+            color: "white", 
+            fontFamily: "Charcoal", 
+            paddingTop: "1.5vh",
+            background: "rgba(0, 0, 0, 0.7)",
+            position: "relative"
+        }}>
             <div className = "d-flex justify-content-center"> 
-                <h1 style={{fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", padding: "4vh"}}> Emma Power </h1>
+                <h1 style={{fontSize: "2em", background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent", padding: "4vh 5vh"}}> Emma Power </h1>
             </div>
             <div className = "justify-content-center align-items-center" >
             <div className = "h-25 d-flex justify-content-center " style={{color: "white"}}></div>
@@ -184,9 +209,11 @@ const PortfolioMain = ({init}) => {
 
         // HTML and Bootstrap Hell
         return (
-            <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", backgroundColor: "#000", position: "flex", imageRendering: "pixelated", backgroundSize: "cover"}}> 
+            <div style={{position: "relative", minHeight: "100vh", overflow: "hidden"}}> 
+                <PlasmaBackground />
     
                 {header}
+                <div style={{height: "7vh"}} />
 
                 <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>
                     <div className = "col-sm-2 d-flex justify-content-center"> 
@@ -198,7 +225,7 @@ const PortfolioMain = ({init}) => {
                         </div>
                         <div className = "h-50 d-flex" style={{color: "white", display: 'inline'}}>
                             <h1 style={{whiteSpace: "pre", fontSize: h1Size, display: "inline"}}>I'm </h1>
-                            <h1 style={{fontSize: h1Size, background: "linear-gradient(60deg, #fcf, #bef)", backgroundClip: "text", color: "transparent"}}>Emma</h1>
+                            <h1 className="animated-gradient" style={{fontSize: h1Size}}>Emma</h1>
                         </div>
                         <div className = "h-25 d-flex " style={{color: "white"}}>
                             <p style={{fontSize: heropSize}}>I'm a software engineering student with a passion for all things digital. I enjoy developing software, working with technology new and old, and taking photos using unique cameras!</p>
@@ -218,11 +245,12 @@ const PortfolioMain = ({init}) => {
                     <div className = "col-sm-2 d-flex justify-content-center"> 
 
                     </div>
-                    <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px"}} >
-                        <div className = "h-50 d-flex align-items-center" style={{color: "white"}}>
+                    <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px", background: "rgba(0, 0, 0, 0.6)", position: "relative", overflow: "hidden"}} >
+                        <ShootingStars seed={12345} />
+                        <div className = "h-50 d-flex align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                             <h1 style={{fontSize: h2Size}}>Treat this like a normal desktop!</h1>
                         </div>
-                        <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                        <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline', position: "relative", zIndex: 1}}>
                             <p style={{fontSize: heropSize}} >Move and close windows just like you are used to! The desktop icons will launch apps in their own windows too!</p>
                         </div>
                         <br/>
@@ -238,25 +266,28 @@ const PortfolioMain = ({init}) => {
     // Projects page
     const proj = () => {
         // HTML and Bootstrap Hell
-        return <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", backgroundColor: "#000", position: "flex", imageRendering: "pixelated", width:"100%"}}> 
+        return <div style={{position: "relative", minHeight: "100vh", overflow: "hidden", width:"100%"}}> 
+            <PlasmaBackground />
     
         {header}
+        <div style={{height: "2vh"}} />
 
         <div className = "h-75 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal",}}>
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
-            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px"}}  >
-                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px", background: "rgba(0, 0, 0, 0.6)", position: "relative", overflow: "hidden"}}  >
+                <ShootingStars seed={54321} />
+                <div className = "h-25 d-flex align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <h1 style={{fontSize: h2Size}}>This Website!</h1>
                 </div>
-                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline', position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize}}>Combining modern web design paradigms with the aesthetics of an operating system from the 90's, this React based website allows for a unique, window based take to display other web based applications</p>
                 </div>
-                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize}}>Tip: Move the Windows Around, Resize the windows, and Click the Desktop Icons!</p>
                 </div>
-                <p>Date Created: December 2024</p>
+                <p style={{position: "relative", zIndex: 1}}>Date Created: December 2024</p>
                 <br/>
             </div>
             <div className = "col-sm-2 d-flex justify-content-center align-items-center">
@@ -268,17 +299,18 @@ const PortfolioMain = ({init}) => {
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
-            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px"}} >
-                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px", background: "rgba(0, 0, 0, 0.6)", position: "relative", overflow: "hidden"}} >
+                <ShootingStars seed={98765} />
+                <div className = "h-25 d-flex align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <h1 style={{fontSize: h2Size}}>3D Software Renderer</h1>
                 </div>
-                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline', position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize}} >A fully functional 3d object renderer, with arbitrary object loading, polygon ordering, and rasterization </p>
                 </div>
-                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize}}> Note: Works best on PC due to WASD/Arrow key controls</p>
                 </div>
-                <p>Date Created: January 2026</p>
+                <p style={{position: "relative", zIndex: 1}}>Date Created: January 2026</p>
                 <br/>
             </div>
             <div className = "col-sm-2 d-flex justify-content-center align-items-center">
@@ -290,17 +322,18 @@ const PortfolioMain = ({init}) => {
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
-            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px"}} >
-                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px", background: "rgba(0, 0, 0, 0.6)", position: "relative", overflow: "hidden"}} >
+                <ShootingStars seed={24680} />
+                <div className = "h-25 d-flex align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <h1 style={{fontSize: h2Size}}>Orbit.JS</h1>
                 </div>
-                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline', position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize}} >Displays an accurate model of any arbitrary amount of celestial bodies. Allows for visualization of Solar Systems as well as other gravitational phenomena</p>
                 </div>
-                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize}}> Tip: Orbits are difficult to create, place planets carefully to avoid collisions</p>
                 </div>
-                <p>Date Created: June 2023 | Date Ported: January 2025</p>
+                <p style={{position: "relative", zIndex: 1}}>Date Created: June 2023 | Date Ported: January 2025</p>
                 <br/>
             </div>
             <div className = "col-sm-2 d-flex justify-content-center align-items-center">
@@ -312,17 +345,18 @@ const PortfolioMain = ({init}) => {
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
-            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px"}} >
-                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px", background: "rgba(0, 0, 0, 0.6)", position: "relative", overflow: "hidden"}} >
+                <ShootingStars seed={13579} />
+                <div className = "h-25 d-flex align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <h1 style={{fontSize: h2Size}}>Plasma</h1>
                 </div>
-                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline', position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize}} >Inspired by famous Demoscene examples, plasma is a vibrant visualization that works on the same principles as electromagnetic radiation</p>
                 </div>
-                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize}}> Tip: It almost looks too clean at native resolution, use the resolution slider for a more old-school demo look.</p>
                 </div>
-                <p>Date Created: December 2025</p>
+                <p style={{position: "relative", zIndex: 1}}>Date Created: December 2025</p>
                 <br/>
             </div>
             <div className = "col-sm-2 d-flex justify-content-center align-items-center">
@@ -334,17 +368,18 @@ const PortfolioMain = ({init}) => {
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
-            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px"}} >
-                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px", background: "rgba(0, 0, 0, 0.6)", position: "relative", overflow: "hidden"}} >
+                <ShootingStars seed={86420} />
+                <div className = "h-25 d-flex align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <h1 style={{fontSize: h2Size}}>Raycast</h1>
                 </div>
-                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline', position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize}}>A graphical engine which uses distance away from objects on a 2d world, to create a 3d effect. While necessary to achieve a 3d effect on older processors, now serves to create a unique aesthetic</p>
                 </div>
-                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize,  display: "block"}}>Tip: Control with WASD or the Arrow Keys</p>
                 </div>
-                <p>Date Created: August 2021 | Date Ported: February 2025</p>
+                <p style={{position: "relative", zIndex: 1}}>Date Created: August 2021 | Date Ported: February 2025</p>
                 <br/>
             </div>
             <div className = "col-sm-2 d-flex justify-content-center align-items-center">
@@ -356,14 +391,15 @@ const PortfolioMain = ({init}) => {
             <div className = "col-sm-2 d-flex justify-content-center"> 
 
             </div>
-            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px"}} >
-                <div className = "h-25 d-flex align-items-center" style={{color: "white"}}>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{padding: "40px", background: "rgba(0, 0, 0, 0.6)", position: "relative", overflow: "hidden"}} >
+                <ShootingStars seed={77777} />
+                <div className = "h-25 d-flex align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <h1 style={{fontSize: h2Size}}>Other Projects</h1>
                 </div>
-                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline'}}>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline', position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize}} >Check out my GitHub page for projects in other languages like C and Java, as well as the source code of this website!</p>
                 </div>
-                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white"}}>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <a className="gradbutton" href='https://github.com/power-emma'>See my GitHub</a>
                 </div>
                 <br/>
@@ -424,9 +460,11 @@ const PortfolioMain = ({init}) => {
             setActivePicSet({ arr: newArr, name: newName, description: newDesc });
 
         // (Soon to be) HTML and Bootstrap Hell
-        return <div style={{backgroundImage: 'url(' + background + ')', backgroundSize: "cover", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat", backgroundColor: "#000", position: "flex", imageRendering: "pixelated", width:"100%"}}> 
+        return <div style={{position: "relative", minHeight: "100vh", overflow: "hidden", width:"100%"}}> 
+            <PlasmaBackground />
         
             {header}
+            <div style={{height: "2vh"}} />
             <div className='px-3 d-flex justify-content-center' style={{flexWrap: "wrap"}}>
                     <button className="mx-2 my-1 gradbutton" style={{padding: ((width/100) + "px "+ (width/33) + "px"), fontSize: heropSize}} onClick={() => changePics(qtp, "Quicktake", "Released at a time where their logo had a rainbow yet their laptops remained in black and white, Apple's first digital camera remains a competitive choice for capturing UFO sightings")}>Quicktake</button>
                     <button className="mx-2 my-1 gradbutton" style={{padding: ((width/100) + "px "+ (width/33) + "px"), fontSize: heropSize}}  onClick={() => changePics(mavicaPics, "Sony Mavica", "The photographic power of a bank security camera, and the computing power of a floppy disk drive, all in one place")}>Mavica</button>

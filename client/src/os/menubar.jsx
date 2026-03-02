@@ -1,7 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './menubar.css'
 
 const MenuBar = () => {
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
 
     function updateTime() {
         let time = new Date().toLocaleTimeString().replace(/([\d]+:[\d]{2})(:[\d]{2})(.*)/, "$1$3");
@@ -9,7 +22,7 @@ const MenuBar = () => {
         timeContainer.innerHTML = time;
     }
 
-    let barElems = (window.innerWidth - 250) / 50
+    let barElems = (windowWidth - 250) / 50
     console.log(barElems)
 
     let barText = [
@@ -22,12 +35,17 @@ const MenuBar = () => {
     if (barElems < barText.length) {
         barText.splice(barElems)
     }
-    setInterval(function() {
-        updateTime();
-    }, 100);
+
+    useEffect(() => {
+        const timer = setInterval(function() {
+            updateTime();
+        }, 100);
+
+        return () => clearInterval(timer);
+    }, []);
 
     // Overall HTML code
-    return  <div className="menubar" style={{zIndex: 9999999, width: window.innerWidth}}>
+    return  <div className="menubar" style={{zIndex: 9999999, width: windowWidth}}>
         <img className="menubar__left-corner" src="corner.png" />
         <img className="menubar__apple-button" src="applelogo.png" />
 

@@ -16,6 +16,13 @@ const Window = ({init, closeFunction }) => {
     const draggingRef = useRef(false);
     const startRef = useRef({ mouseX: 0, mouseY: 0, startW: 0, startH: 0 });
 
+    // Update size when init.width or init.height changes (from external resize)
+    useEffect(() => {
+        if (init.width !== size.width || init.height !== size.height) {
+            setSize({ width: init.width, height: init.height });
+        }
+    }, [init.width, init.height]);
+
     // Spawn titlebar
     let tb = titlebar(name)
     // If mobile then spawn the larger titlebar

@@ -1,7 +1,12 @@
 .gradbutton {
     background: 
       linear-gradient(#000, #000) padding-box,
-      linear-gradient(60deg, #f9e, #acf) border-box;
+      linear-gradient(180deg, 
+        rgba(220, 210, 255, 0.9) 0%, 
+        rgba(180, 160, 255, 1) 15%, 
+        rgba(150, 130, 230, 1) 50%, 
+        rgba(120, 100, 200, 1) 85%, 
+        rgba(100, 80, 180, 0.8) 100%) border-box;
     color: #FFFFFF;
     padding: 12px 40px;
     border: 5px solid transparent;
@@ -9,23 +14,48 @@
     display: inline-block;
     font-size: 1.15rem;
     font-family: Charcoal,
+    box-shadow: 
+      0 1px 0 rgba(255, 255, 255, 0.4) inset,
+      0 8px 16px rgba(100, 80, 180, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+    filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.5));
   }
 
   .gradImgBorder {
-    border-image: linear-gradient(60deg, #f9e, #acf) 1;
+    border-image: linear-gradient(180deg, 
+      rgba(220, 210, 255, 0.9) 0%, 
+      rgba(180, 160, 255, 1) 15%, 
+      rgba(150, 130, 230, 1) 50%, 
+      rgba(120, 100, 200, 1) 85%, 
+      rgba(100, 80, 180, 0.8) 100%) 1;
     border-width: 6px;
     border-style: solid;
     padding: 0px;
     max-width: 100%;
     height: auto;
+    box-shadow: 
+      0 1px 0 rgba(255, 255, 255, 0.4) inset,
+      0 4px 8px rgba(100, 80, 180, 0.35),
+      0 1px 3px rgba(0, 0, 0, 0.3);
+    filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.5));
   }
 
   .gradProjBorder {
-    border-image: linear-gradient(60deg, #f9e, #acf) 1;
+    border-image: linear-gradient(180deg, 
+      rgba(220, 210, 255, 0.9) 0%, 
+      rgba(180, 160, 255, 1) 15%, 
+      rgba(150, 130, 230, 1) 50%, 
+      rgba(120, 100, 200, 1) 85%, 
+      rgba(100, 80, 180, 0.8) 100%) 1;
     border-radius: 10px; /* this doesn't work */
     border-width: 12px;
     border-style: solid;
     padding: 0px;
+    box-shadow: 
+      0 2px 0 rgba(255, 255, 255, 0.4) inset,
+      0 8px 16px rgba(100, 80, 180, 0.4),
+      0 2px 6px rgba(0, 0, 0, 0.3);
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
   }
 
 /* Responsive tweaks for small screens */
@@ -37,6 +67,35 @@
   .gradProjBorder {
     border-width: 8px;
     padding: 12px;
+  }
+}
+
+.animated-gradient {
+  background: linear-gradient(
+    90deg,
+    #FFB3BA 0%,
+    #FFDFBA 14%,
+    #FFFFBA 28%,
+    #BAFFC9 42%,
+    #BAE1FF 56%,
+    #E0BBE4 70%,
+    #ff99e9 84%,
+    #FFB3BA 100%
+
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-scroll 8s linear infinite;
+}
+
+@keyframes gradient-scroll {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
   }
 }
 
