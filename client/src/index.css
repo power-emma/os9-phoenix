@@ -31,18 +31,20 @@ code {
   font-family: Charcoal;
   font-display: swap;
   font-size: 13px;
+  z-index: 10;
 }
 
 .menubar__time {
   position: absolute;
   display: inline;
   right: 100px;
-  top: 2px;
+  top: -1px;
   background: transparent;
   border: none !important;
   font-family: Charcoal;
   font-display: swap;
   font-size: 13px;
+  z-index: 10;
 }
 
 .menubar__apple-button {
@@ -59,6 +61,10 @@ code {
   -webkit-font-smoothing: auto;
   background: transparent;
   border: none !important;
+  max-width: calc(100% - 200px);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .menubar__button--no-text {
@@ -69,6 +75,7 @@ code {
   font-family: Charcoal;
   font-display: swap;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .menubar {
@@ -77,10 +84,7 @@ code {
   width: 100%;
   background-color: rgb(221, 221, 221) !important;
   background: rgb(221, 221, 221) !important;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 1000;
   /* iOS-specific fixes for background rendering */
   -webkit-transform: translateZ(0);
@@ -102,4 +106,5 @@ code {
   float: right;
   -webkit-transform: scaleX(-1);
   transform: scaleX(-1);
+  z-index: 10;
 }
