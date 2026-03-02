@@ -59,22 +59,6 @@ if [ ! -f "$TMP_STAGING/index.html" ]; then
   exit 1
 fi
 
-# Check for any remaining hard-coded production domain entries in the freshly-built files.
-PROD_DOMAIN="https://poweremma.com"
-echo "Scanning staging files for occurrences of $PROD_DOMAIN..."
-STAGE_OCCURRENCES=$(grep -R --line-number --binary-files=without-match "$PROD_DOMAIN" "$TMP_STAGING" || true)
-if [ -n "$STAGE_OCCURRENCES" ]; then
-  echo "Found occurrences of $PROD_DOMAIN in the freshly-built files. We'll rewrite them to root-relative paths and create .bak backups."
-  echo "Occurrences (first 20 lines):"
-  echo "$STAGE_OCCURRENCES" | sed -n '1,20p'
-  # Rewrite common absolute forms to root-relative so deployed site works regardless of domain.
-  echo "Rewriting $PROD_DOMAIN and common variants -> / in staging files (backups will be created as .bak)"
-  find "$TMP_STAGING" -type f -exec sed -i.bak "s|https://www.poweremma.com/|/|g; s|https://poweremma.com/|/|g; s|http://www.poweremma.com/|/|g; s|http://poweremma.com/|/|g; s|https://www.poweremma.com|/|g; s|https://poweremma.com|/|g; s|http://www.poweremma.com|/|g; s|http://poweremma.com|/|g" {} + || true
-  echo "Rewrite complete. Backups are available as *.bak under $TMP_STAGING"
-else
-  echo "No $PROD_DOMAIN occurrences found in staging build."
-fi
-
 # Compute checksum of the staging index.html for verification and diagnostic reporting
 STAGE_SUM=$(sha256sum "$TMP_STAGING/index.html" | cut -d' ' -f1 || true)
 echo "Staging index.html sha256: $STAGE_SUM"
@@ -93,11 +77,6 @@ if sudo grep -R "/var/www/html/my-react-app/build" /etc/nginx -n >/dev/null 2>&1
   sudo mkdir -p "$TARGET_NEW/build"
   sudo cp -r "$TMP_STAGING"/* "$TARGET_NEW/build/"
 fi
-
-# Run the same post-deploy rewrite safety check on the target-new dir (extra safeguard)
-echo "Final scan of $TARGET_NEW for $PROD_DOMAIN (should be none)..."
-sudo grep -R --line-number --binary-files=without-match "$PROD_DOMAIN" "$TARGET_NEW" || true
-sudo find "$TARGET_NEW" -type f -exec sed -i.bak "s|$PROD_DOMAIN||g" {} + || true
 
 # Compute checksum of the to-be-deployed index.html
 DEPLOY_SUM=$(sudo sha256sum "$TARGET_NEW/index.html" | cut -d' ' -f1 || true)
