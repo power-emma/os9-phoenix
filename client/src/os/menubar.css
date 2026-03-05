@@ -1,7 +1,7 @@
 .menubar__right-header {
     position: absolute;
     right: 132px;
-    top: 1px;
+    top: -1px;
     background: transparent;
     border: none !important;
     font-family: Charcoal;

@@ -16,13 +16,16 @@ const ArmEmulator = ({ init }) => {
     const [instructionCount, setInstructionCount] = useState(0);
     const [compiledCode, setCompiledCode] = useState(null);
     const [debugInfo, setDebugInfo] = useState([]);
-    const [speed, setSpeed] = useState(20); // 20Hz default
+    const [speed, setSpeed] = useState(20); // Actual Hz
+    const [speedSlider, setSpeedSlider] = useState(20); // Slider position (0-100)
+    const [unlimitedSpeed, setUnlimitedSpeed] = useState(false); // Max speed mode
+    const [actualSpeed, setActualSpeed] = useState(0); // Measured speed in Hz
     const [pcToLineMap, setPcToLineMap] = useState({});
     const [isPortrait, setIsPortrait] = useState(false);
     
     const intervalRef = useRef(null);
     const codeEditorRef = useRef(null);
-    const codeDisplayRef = useRef(null);
+    const lineNumbersRef = useRef(null);
     const containerRef = useRef(null);
     const executionStateRef = useRef({
         registers: Array(17).fill(0),
@@ -208,14 +211,30 @@ const ArmEmulator = ({ init }) => {
                 
                 token = token.trim();
                 
+                // Check if it's indirect addressing with square brackets [rN] or [label]
+                if (token.startsWith('[') && token.endsWith(']')) {
+                    const inner = token.substring(1, token.length - 1).trim();
+                    // Check if inner is a register
+                    if (inner.match(/^r\d+$/)) {
+                        return { value: parseInt(inner.substring(1)), isReg: true, indirect: true };
+                    }
+                    // Check if it's a label
+                    const globalAddress = nameToAddress(inner, varNames, varAddresses);
+                    if (globalAddress !== -1) {
+                        const relativeAddress = globalAddress - (currentLine * 4);
+                        return { value: relativeAddress, isReg: false, indirect: true };
+                    }
+                    // Otherwise treat as immediate value
+                    if (inner.startsWith('0x')) {
+                        return { value: parseInt(inner, 16), isReg: false, indirect: true };
+                    }
+                    return { value: parseInt(inner), isReg: false, indirect: true };
+                }
                 // Check if it's a valid register (r followed by digits)
-                if (token.match(/^r\d+$/)) {
+                else if (token.match(/^r\d+$/)) {
                     return { value: parseInt(token.substring(1)), isReg: true };
                 } else if (token.startsWith('#')) {
                     return { value: parseInt(token.substring(1)), isReg: false };
-                } else if (token.startsWith('[') && token.endsWith(']')) {
-                    const inner = token.substring(1, token.length - 1);
-                    return { value: parseInt(inner), isReg: false };
                 } else if (token.startsWith('0x')) {
                     return { value: parseInt(token, 16), isReg: false };
                 } else {
@@ -329,11 +348,13 @@ const ArmEmulator = ({ init }) => {
                     opcode += o2.value * 0x10000 + o1.value * 0x1000 + o3.value;
                     break;
                 case 'LDR':
-                    opcode = o2.isReg ? 0x15D00000 : 0x17D00000;
+                    // [rN] uses register indirect (immBit=0), [label] or label uses PC-relative (immBit=1)
+                    opcode = (o2.isReg && o2.indirect) ? 0x15D00000 : 0x17D00000;
                     opcode += o1.value * 0x1000 + o2.value;
                     break;
                 case 'STR':
-                    opcode = o2.isReg ? 0x17E00000 : 0x15E00000;
+                    // [rN] uses register indirect (immBit=1), [label] should not be used for STR
+                    opcode = (o2.isReg && o2.indirect) ? 0x17E00000 : 0x15E00000;
                     opcode += o1.value * 0x1000 + o2.value;
                     break;
                 case 'HLT':
@@ -683,14 +704,15 @@ const ArmEmulator = ({ init }) => {
     const handleStep = () => {
         if (!compiledCode || executionStateRef.current.halted) return;
         
+        const pc = executionStateRef.current.registers[15];
+        setCurrentInstruction(pc);
+        setCurrentLine(pcToLineMap[pc] ?? null);
+        
         const debugMsg = executeInstruction(executionStateRef.current);
-        const pc = executionStateRef.current.registers[15] - 4;
         
         setRegisters([...executionStateRef.current.registers]);
         setTerminal([...executionStateRef.current.terminal]);
         setInstructionCount(prev => prev + 1);
-        setCurrentInstruction(pc);
-        setCurrentLine(pcToLineMap[pc] ?? null);
         
         if (debugMsg) {
             setDebugInfo(prev => [...prev.slice(-20), debugMsg]);
@@ -705,105 +727,188 @@ const ArmEmulator = ({ init }) => {
     // Execution loop at specified Hz
     useEffect(() => {
         if (isRunning && !isPaused && compiledCode) {
-            const interval = 1000 / speed; // Convert Hz to ms
-            
-            intervalRef.current = setInterval(() => {
-                if (executionStateRef.current.halted) {
-                    clearInterval(intervalRef.current);
-                    setIsRunning(false);
-                    setDebugInfo(prev => [...prev, 'CPU HALTED']);
-                    return;
-                }
+            if (unlimitedSpeed) {
+                // Unlimited speed mode - run as fast as possible
+                let running = true;
+                let totalInstrCount = 0;
+                const startTime = performance.now();
+                let lastUpdate = startTime;
+                let animationFrameId = null;
                 
-                const debugMsg = executeInstruction(executionStateRef.current);
-                const pc = executionStateRef.current.registers[15] - 4;
+                const runFast = () => {
+                    if (!running || executionStateRef.current.halted) {
+                        if (executionStateRef.current.halted) {
+                            setIsRunning(false);
+                            setDebugInfo(prev => [...prev, 'CPU HALTED']);
+                            // Final update
+                            const pc = executionStateRef.current.registers[15] - 4;
+                            setRegisters([...executionStateRef.current.registers]);
+                            setTerminal([...executionStateRef.current.terminal]);
+                            setCurrentInstruction(pc);
+                            setCurrentLine(pcToLineMap[pc] ?? null);
+                        }
+                        return;
+                    }
+                    
+                    // Execute multiple instructions per frame
+                    const batchSize = 1000;
+                    for (let i = 0; i < batchSize && !executionStateRef.current.halted && running; i++) {
+                        executeInstruction(executionStateRef.current);
+                        totalInstrCount++;
+                    }
+                    
+                    const now = performance.now();
+                    const elapsed = now - lastUpdate;
+                    
+                    // Update UI every ~100ms or when halted
+                    if (elapsed >= 100 || executionStateRef.current.halted) {
+                        const pc = executionStateRef.current.registers[15];
+                        setRegisters([...executionStateRef.current.registers]);
+                        setTerminal([...executionStateRef.current.terminal]);
+                        setInstructionCount(prev => prev + totalInstrCount);
+                        setCurrentInstruction(pc);
+                        setCurrentLine(pcToLineMap[pc] ?? null);
+                        
+                        // Calculate actual speed (instructions per second)
+                        if (elapsed > 0 && totalInstrCount > 0) {
+                            const measuredSpeed = Math.round(totalInstrCount / elapsed * 1000);
+                            setActualSpeed(measuredSpeed);
+                        }
+                        
+                        lastUpdate = now;
+                        totalInstrCount = 0;
+                    }
+                    
+                    if (running) {
+                        animationFrameId = requestAnimationFrame(runFast);
+                    }
+                };
                 
-                setRegisters([...executionStateRef.current.registers]);
-                setTerminal([...executionStateRef.current.terminal]);
-                setInstructionCount(prev => prev + 1);
-                setCurrentInstruction(pc);
-                setCurrentLine(pcToLineMap[pc] ?? null);
+                animationFrameId = requestAnimationFrame(runFast);
                 
-                if (debugMsg) {
-                    setDebugInfo(prev => [...prev.slice(-20), debugMsg]);
-                }
-            }, interval);
+                return () => {
+                    running = false;
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                    }
+                };
+            } else {
+                // Normal speed mode with interval
+                // For high speeds, execute multiple instructions per tick to avoid setInterval limitations
+                const minInterval = 10; // Minimum interval in ms (100Hz tick rate)
+                const interval = Math.max(minInterval, 1000 / speed);
+                const instructionsPerTick = Math.max(1, Math.round(speed * interval / 1000));
+                
+                intervalRef.current = setInterval(() => {
+                    if (executionStateRef.current.halted) {
+                        clearInterval(intervalRef.current);
+                        setIsRunning(false);
+                        setDebugInfo(prev => [...prev, 'CPU HALTED']);
+                        return;
+                    }
+                    
+                    // Execute multiple instructions if needed for high speeds
+                    for (let i = 0; i < instructionsPerTick && !executionStateRef.current.halted; i++) {
+                        const debugMsg = executeInstruction(executionStateRef.current);
+                        if (debugMsg && i === instructionsPerTick - 1) {
+                            setDebugInfo(prev => [...prev.slice(-20), debugMsg]);
+                        }
+                    }
+                    
+                    const pc = executionStateRef.current.registers[15];
+                    setRegisters([...executionStateRef.current.registers]);
+                    setTerminal([...executionStateRef.current.terminal]);
+                    setInstructionCount(prev => prev + instructionsPerTick);
+                    setCurrentInstruction(pc);
+                    setCurrentLine(pcToLineMap[pc] ?? null);
+                }, interval);
+            }
             
             return () => {
                 if (intervalRef.current) {
                     clearInterval(intervalRef.current);
                 }
             };
-        } else {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
         }
-    }, [isRunning, isPaused, compiledCode, speed]);
+    }, [isRunning, isPaused, compiledCode, speed, unlimitedSpeed, pcToLineMap]);
 
     // Load default program
     useEffect(() => {
         const defaultProgram = `; Hex Fibonacci Printer - Emma Power - October 22, 2025
 ; Start of Program
-start   MOV r0, #0
-        ADD r0, r15, intro
-        B print
-resume  LDR r1, mask
-        LDR r4, tx_fifo
-        MOV r8, #1
-        MOV r9, #0
+start   MOV r0, #0          
+        ADD r0, r15, intro      ; Load String Pointer into r0
+        B print                 ; Print the intro string
+resume  LDR r1, [mask]          ; Load mask for hex digit extraction
+        LDR r4, [tx_fifo]       ; Load UART address for output
+        MOV r8, #1              ; Initialize Fibonacci numbers
+        MOV r9, #0              ; R0 Contains n-2, R9 Contains n-1, r10 contains n
 
-fib     LDR r13, sp_st
-        LDR r5, sp_st
-        ADD r5, r5, #4
-        ADD r6, r6, #1
-        ADD r10, r9, r8
-        MOV r8, r9
-        MOV r9, r10
-        MOV r0, r10
+fib     LDR r13, sp_st          ; Load 2 copies of the stack pointer (r5 will be used later)
+        LDR r5, sp_st           
+        ADD r5, r5, #4          ; When we are at this point on the stack, no more digits remain
+        ADD r6, r6, #1          ; Increment Fibonacci index counter (Counts how many iterations to do)
+        ADD r10, r9, r8         ; Calculate next Fibonacci number
+        MOV r8, r9              ; Move n-1 to n-2
+        MOV r9, r10             ; Move n to n-1
+        MOV r0, r10             ; Move Fibonacci number to r0 for printing
 
-loopa   AND r2, r1, r0
-        STR r2, r13
-        SUB r13, r13, #4
-        MOV r0, r0, LSR #4
-        CMP r0, #0
-        BNE loopa
-        ADD r13, r13, #4
+loopa   AND r2, r1, r0          ; Start of digit extraction loop, use the mask to get the last hex digit
+        STR r2, [r13]           ; Store the digit on the stack
+        SUB r13, r13, #4        ; Move stack pointer down
+        MOV r0, r0, LSR #4      ; Shift the Fibonacci number to get the next hex digit in position
+        CMP r0, #0              ; If the number has been shifted down to 0, we have no more digits to print
+        BNE loopa               ; Else, noop for next digits
+        ADD r13, r13, #4        ; Un-Subtract last decrement of stack pointer to point to the last digit
 
-loopc   CMP r13, r5
-        BEQ end
-        LDR r2, r13
-        ADD r13, r13, #4
-        CMP r2, #10
-        BHS letter
-number  ADD r2, r2, #48
-        STR r2, r4
-        B loopc
-letter  ADD r2, r2, #55
-        STR r2, r4
-        B loopc
+loopc   CMP r13, r5             ; Start of print loop, see if stack pointer is at the end (thus number is done printing)
+        BEQ end                 ; If so, end of iteration
+        LDR r2, [r13]           ; Load the next digit to print from stack
+        ADD r13, r13, #4        ; Move stack pointer up for next digit
+        CMP r2, #10             ; See if it is a decimal number (0-9) or a letter (A-F)
+        BHS letter              ; Letters must be handled slightly diffrently
 
-end     MOV r2, #10
-        STR r2, r4
-        CMP r6, #10
-        BNE fib
+number  ADD r2, r2, #48         ; Get Ascii value of number
+        STR r2, [r4]            ; Print to UART
+        B loopc                 ; Branch back to print next digit
+
+letter  ADD r2, r2, #55         ; Get Ascii value of letter
+        STR r2, [r4]            ; Print to UART
+        B loopc                 ; Branch back to print next digit
+
+end     MOV r2, #10             ; Get Newline character
+        STR r2, [r4]            ; Print Newline after each Fibonacci number
+        CMP r6, #20             ; Edit this number to print more or less Fibonacci numbers
+        BNE fib                 ; If less than r6, do another iteration, else end program
         HLT
 
-print           LDR r2, tx_fifo
-                MOV r3, #0
-print_loop      ADD r3, r3, #4
-                LDR r1, r0
-                CMP r1, #0
-                BEQ print_end
-                STR r1, r2
-                ADD r0, r0, #4
-                B print_loop
-print_end       B resume
+; Text Printing Loop
+print           LDR r2, [tx_fifo]   ; Get UART Address
+print_loop      LDR r1, [r0]        ; Load in the next character
+                CMP r1, #0          ; If it is 0 (null char) then end print
+                BEQ print_end       ; Else, print the character and loop for the next one
+                STR r1, [r2]        ; Print character to UART
+                ADD r0, r0, #4      ; Increment string pointer to next character
+                B print_loop        ; Print next character
+print_end       B resume            ; Resume Last Execution
 
-intro  "The first 10 fibonacci numbers are:\\n"
+intro  "The first 20 fibonacci numbers are:\\n"
 mask    0x0000000F
 sp_st   0x00000100
-tx_fifo 0xF0000000`;
+tx_fifo 0xF0000000
+
+; For those making their own programs,
+; tx_fifo is the UART transmit register. Writing a byte to it will print the corresponding character to the terminal.
+; sp_st is the initial stack pointer address.
+; The emulator has a default of 64KB of memory, so you can use any address from 0x00000000 to 0x0000FFFF for your code and data.
+; Strings are stored as 32 bit words in memory, with a null terminator at the end.
+
+; Implemented instructions are as follows
+; Data Processing: AND, EOR, SUB, RSB, ADD, ADC, SBC, RSC, TST, TEQ, CMP, CMN, ORR, MOV, BIC, MVN
+; Load/Store: LDR, STR (only with register offset, no immediate or pre/post indexing)
+; Branches: B, BEQ, BNE, BHS, BLO
+; Other: HLT to stop execution
+`;
         
         setAsmCode(defaultProgram);
     }, []);
@@ -847,14 +952,30 @@ tx_fifo 0xF0000000`;
                     <button onClick={handleStep} disabled={!compiledCode || (isRunning && !isPaused)}>Step</button>
                     <button onClick={handleReset} disabled={!compiledCode}>Reset</button>
                     <label>
-                        Speed: {speed}Hz
+                        Speed: {unlimitedSpeed ? `MAX (${actualSpeed >= 1000000 ? `${(actualSpeed/1000000).toFixed(1)}MHz` : actualSpeed >= 1000 ? `${(actualSpeed/1000).toFixed(0)}kHz` : `${actualSpeed}Hz`})` : speed >= 1000000 ? '1MHz' : speed >= 1000 ? `${(speed/1000).toFixed(1)}kHz` : `${speed}Hz`}
                         <input 
                             type="range" 
-                            min="1" 
+                            min="0" 
                             max="100" 
-                            value={speed} 
-                            onChange={(e) => setSpeed(parseInt(e.target.value))}
+                            value={speedSlider} 
+                            disabled={unlimitedSpeed}
+                            onChange={(e) => {
+                                const sliderVal = parseInt(e.target.value);
+                                setSpeedSlider(sliderVal);
+                                // Exponential scale: 1 Hz to 1 MHz
+                                // slider 0 = 1Hz, slider 100 = 1,000,000Hz
+                                const actualSpeed = Math.round(Math.pow(10, sliderVal / 20));
+                                setSpeed(actualSpeed);
+                            }}
                         />
+                        <label style={{marginLeft: '10px'}}>
+                            <input 
+                                type="checkbox" 
+                                checked={unlimitedSpeed}
+                                onChange={(e) => setUnlimitedSpeed(e.target.checked)}
+                            />
+                            MAX
+                        </label>
                     </label>
                 </div>
             </div>
@@ -901,33 +1022,25 @@ tx_fifo 0xF0000000`;
                             minHeight: 0
                         }}>
                             <h3>Assembly Code</h3>
-                            <div 
-                                ref={codeDisplayRef}
-                                className="code-editor-container"
-                            >
-                                {asmCode.split('\n').map((line, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`code-line ${currentLine === idx ? 'active-line' : ''}`}
-                                    >
-                                        <span className="line-number">{(idx + 1).toString().padStart(3, ' ')}</span>
-                                        <span className="line-content">{line || ' '}</span>
-                                    </div>
-                                ))}
+                            <div className="code-editor-wrapper">
+                                <div ref={lineNumbersRef} className="line-numbers">
+                                    {asmCode.split('\n').map((_, idx) => (
+                                        <div key={idx} className="line-number">{idx + 1}</div>
+                                    ))}
+                                </div>
+                                <textarea
+                                    ref={codeEditorRef}
+                                    value={asmCode}
+                                    onChange={(e) => setAsmCode(e.target.value)}
+                                    onScroll={(e) => {
+                                        if (lineNumbersRef.current) {
+                                            lineNumbersRef.current.scrollTop = e.target.scrollTop;
+                                        }
+                                    }}
+                                    spellCheck={false}
+                                    className="code-editor"
+                                />
                             </div>
-                            <textarea
-                                ref={codeEditorRef}
-                                value={asmCode}
-                                onChange={(e) => setAsmCode(e.target.value)}
-                                onScroll={(e) => {
-                                    if (codeDisplayRef.current) {
-                                        codeDisplayRef.current.scrollTop = e.target.scrollTop;
-                                        codeDisplayRef.current.scrollLeft = e.target.scrollLeft;
-                                    }
-                                }}
-                                spellCheck={false}
-                                className="code-editor-overlay"
-                            />
                         </div>
                     </>
                 ) : (
@@ -935,33 +1048,25 @@ tx_fifo 0xF0000000`;
                         {/* Landscape: Code first, then execution panel with all sections */}
                         <div className="code-panel">
                             <h3>Assembly Code</h3>
-                            <div 
-                                ref={codeDisplayRef}
-                                className="code-editor-container"
-                            >
-                                {asmCode.split('\n').map((line, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`code-line ${currentLine === idx ? 'active-line' : ''}`}
-                                    >
-                                        <span className="line-number">{(idx + 1).toString().padStart(3, ' ')}</span>
-                                        <span className="line-content">{line || ' '}</span>
-                                    </div>
-                                ))}
+                            <div className="code-editor-wrapper">
+                                <div ref={lineNumbersRef} className="line-numbers">
+                                    {asmCode.split('\n').map((_, idx) => (
+                                        <div key={idx} className="line-number">{idx + 1}</div>
+                                    ))}
+                                </div>
+                                <textarea
+                                    ref={codeEditorRef}
+                                    value={asmCode}
+                                    onChange={(e) => setAsmCode(e.target.value)}
+                                    onScroll={(e) => {
+                                        if (lineNumbersRef.current) {
+                                            lineNumbersRef.current.scrollTop = e.target.scrollTop;
+                                        }
+                                    }}
+                                    spellCheck={false}
+                                    className="code-editor"
+                                />
                             </div>
-                            <textarea
-                                ref={codeEditorRef}
-                                value={asmCode}
-                                onChange={(e) => setAsmCode(e.target.value)}
-                                onScroll={(e) => {
-                                    if (codeDisplayRef.current) {
-                                        codeDisplayRef.current.scrollTop = e.target.scrollTop;
-                                        codeDisplayRef.current.scrollLeft = e.target.scrollLeft;
-                                    }
-                                }}
-                                spellCheck={false}
-                                className="code-editor-overlay"
-                            />
                         </div>
                         
                         <div className="execution-panel">

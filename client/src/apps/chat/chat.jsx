@@ -236,7 +236,7 @@ export default function Chat({ init }) {
                           >✕</button>
                         )}
                       </div>
-                      <div style={{padding: '4px 8px', background: '#fff', border: '1px solid #eee', wordBreak: 'break-word'}}>
+                      <div style={{padding: '4px 8px', background: '#fff', border: '1px solid #eee', wordBreak: 'break-word', whiteSpace: 'pre-wrap'}}>
                         {m.message}
                       </div>
                     </div>

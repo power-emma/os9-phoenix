@@ -103,9 +103,10 @@ function savePin(channel, text) {
 // Each entry: { id: string, label: string }
 // Add or reorder here — clients fetch this list at runtime.
 const CHANNEL_DEFS = [
-  { id: 'general',    label: '# general'    },
-  { id: 'test',       label: '# test'       },
-  { id: 'bug-report', label: '# bug-report' },
+  { id: 'general',      label: '# general'      },
+  { id: 'test',         label: '# test'         },
+  { id: 'bug-report',   label: '# bug-report'   },
+  { id: 'arm-programs', label: '# arm-programs' },
 ];
 const CHANNELS = CHANNEL_DEFS.map(c => c.id);
 
@@ -141,7 +142,7 @@ const state = {
       id: nextId++,
       channel,
       username: String(username).slice(0, 64),
-      message: String(message).slice(0, 2000),
+      message: String(message),
       ts: Date.now(),
     };
     stores[channel].push(msg);
