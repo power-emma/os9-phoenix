@@ -1025,7 +1025,7 @@ tx_fifo 0xF0000000
                             <div className="code-editor-wrapper">
                                 <div ref={lineNumbersRef} className="line-numbers">
                                     {asmCode.split('\n').map((_, idx) => (
-                                        <div key={idx} className="line-number">{idx + 1}</div>
+                                        <div key={idx} className={`line-number ${currentLine === idx ? 'active-instruction' : ''}`}>{idx + 1}</div>
                                     ))}
                                 </div>
                                 <textarea
@@ -1051,7 +1051,7 @@ tx_fifo 0xF0000000
                             <div className="code-editor-wrapper">
                                 <div ref={lineNumbersRef} className="line-numbers">
                                     {asmCode.split('\n').map((_, idx) => (
-                                        <div key={idx} className="line-number">{idx + 1}</div>
+                                        <div key={idx} className={`line-number ${currentLine === idx ? 'active-instruction' : ''}`}>{idx + 1}</div>
                                     ))}
                                 </div>
                                 <textarea

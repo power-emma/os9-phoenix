@@ -230,6 +230,12 @@
     padding-right: 8px;
 }
 
+.line-number.active-instruction {
+    background-color: #0059ff;
+    color: #000000;
+    font-weight: bold;
+}
+
 .code-editor {
     flex: 1;
     padding: 8px;
