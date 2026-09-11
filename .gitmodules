@@ -10,3 +10,6 @@
 [submodule "client/src/apps/plasma"]
 	path = client/src/apps/plasma
 	url = https://github.com/power-emma/os9-plasma.git
+[submodule "client/src/apps/arm-emu"]
+	path = client/src/apps/arm-emu
+	url = https://github.com/power-emma/serene.git
