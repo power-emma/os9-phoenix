@@ -17,10 +17,6 @@ app.get('/', (req, res) => {
   res.send('Hello from Express!');
 });
 
-// mount desktop route from routes/desktop.js at /api/desktop
-const desktopRouter = require('./routes/desktop');
-app.use('/api/desktop', desktopRouter);
-
 // mount chat REST API (history endpoint) at /api/chat
 const chatRouter = require('./routes/chat');
 app.use('/api/chat', chatRouter);
@@ -29,7 +25,7 @@ app.use('/api/chat', chatRouter);
 const authRouter = require('./routes/auth');
 app.use('/api/auth', authRouter);
 
-console.log('Mounted routes: /api/desktop, /api/chat, /api/auth');
+console.log('Mounted routes: /api/chat, /api/auth');
 
 // ── WebSocket chat server ──────────────────────────────────────────────────
 
