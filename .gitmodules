@@ -4,3 +4,6 @@
 [submodule "client/src/apps/orbit"]
 	path = client/src/apps/orbit
 	url = https://github.com/power-emma/os9-orbit.git
+[submodule "client/src/apps/raycast"]
+	path = client/src/apps/raycast
+	url = https://github.com/power-emma/os9-raycast.git
