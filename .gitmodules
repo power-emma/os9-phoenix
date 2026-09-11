@@ -7,3 +7,6 @@
 [submodule "client/src/apps/raycast"]
 	path = client/src/apps/raycast
 	url = https://github.com/power-emma/os9-raycast.git
+[submodule "client/src/apps/plasma"]
+	path = client/src/apps/plasma
+	url = https://github.com/power-emma/os9-plasma.git
