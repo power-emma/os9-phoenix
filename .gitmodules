@@ -1,3 +1,6 @@
 [submodule "client/src/apps/3d"]
 	path = client/src/apps/3d
 	url = https://github.com/power-emma/two-stroke.git
+[submodule "client/src/apps/orbit"]
+	path = client/src/apps/orbit
+	url = https://github.com/power-emma/os9-orbit.git
