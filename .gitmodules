@@ -13,3 +13,6 @@
 [submodule "client/src/apps/arm-emu"]
 	path = client/src/apps/arm-emu
 	url = https://github.com/power-emma/serene.git
+[submodule "client/src/apps/chat"]
+	path = client/src/apps/chat
+	url = https://github.com/power-emma/chat-js.git
