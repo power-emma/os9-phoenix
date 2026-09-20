@@ -16,3 +16,6 @@
 [submodule "client/src/apps/chat"]
 	path = client/src/apps/chat
 	url = https://github.com/power-emma/chat-js.git
+[submodule "client/src/apps/contrast"]
+	path = client/src/apps/contrast
+	url = https://github.com/power-emma/contrast.git

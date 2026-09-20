@@ -8,6 +8,25 @@ echo "Repo root: $ROOT"
 CURUSER=$(id -un 2>/dev/null || echo "root")
 WEB_GROUP=""
 
+# Pull the latest code for every app submodule under client/src/apps so the
+# build always includes each app's newest commits, not just whatever commit
+# happens to be pinned in this repo.
+echo "Updating app submodules to latest..."
+cd "$ROOT"
+git submodule sync --recursive
+git submodule update --init --recursive
+git submodule foreach --recursive '
+  branch=$(git remote show origin | sed -n "s/.*HEAD branch: //p")
+  if [ -z "$branch" ]; then
+    echo "Could not determine default branch for $name, skipping pull"
+  else
+    echo "Pulling latest $branch for $name..."
+    git fetch origin "$branch"
+    git checkout "$branch"
+    git reset --hard "origin/$branch"
+  fi
+'
+
 # Build the React app (client)
 if [ ! -d "$ROOT/client" ]; then
   echo "Error: client directory not found at $ROOT/client"

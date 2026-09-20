@@ -302,6 +302,33 @@ const PortfolioMain = ({init}) => {
             <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px", background: "rgba(0, 0, 0, 0.6)", position: "relative", overflow: "hidden"}} >
                 <ShootingStars seed={98765} />
                 <div className = "h-25 d-flex align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
+                    <h1 style={{fontSize: h2Size}}>Contrast Macintosh Emulator</h1>
+                </div>
+                <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline', position: "relative", zIndex: 1}}>
+                    <p style={{fontSize: heropSize}} >An original Macintosh emulator, emulating a Macintosh Plus running System 6.0.8. Complete with 68k Emulation, Memory Management, Floppy Emulation, SCSI Emulation, and I/O implementation.</p>
+                </div>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
+                    <p style={{fontSize: heropSize}}> Note: Despite being written in JS, it is still much faster than a genuine Mac Plus</p>
+                </div>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1, gap: "5vw"}}>
+                    <a className="gradbutton" href='https://github.com/power-emma/contrast'>Source Code</a>
+                </div>
+                <br/>
+                <p style={{position: "relative", zIndex: 1}}>Date Created: September 2026</p>
+                <br/>
+            </div>
+            <div className = "col-sm-2 d-flex justify-content-center align-items-center">
+                
+            </div>
+        </div>
+
+        <div className = "h-75 d-flex justify-content-center align-items-center" style={{color: "white", fontFamily: "Charcoal", marginTop: "50px"}}>
+            <div className = "col-sm-2 d-flex justify-content-center"> 
+
+            </div>
+            <div className = "col-sm-8 justify-content-center align-items-center gradProjBorder" style = {{paddingTop: "40px", paddingLeft: "40px", paddingRight: "40px", background: "rgba(0, 0, 0, 0.6)", position: "relative", overflow: "hidden"}} >
+                <ShootingStars seed={98765} />
+                <div className = "h-25 d-flex align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <h1 style={{fontSize: h2Size}}>3D Software Renderer</h1>
                 </div>
                 <div className = "h-50 d-flex justify-content-center align-items-center" style={{color: "white", display: 'inline', position: "relative", zIndex: 1}}>
@@ -310,6 +337,10 @@ const PortfolioMain = ({init}) => {
                 <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1}}>
                     <p style={{fontSize: heropSize}}> Note: Works best on PC due to WASD/Arrow key controls</p>
                 </div>
+                <div className = "h-25 d-flex justify-content-center align-items-center" style={{color: "white", position: "relative", zIndex: 1, gap: "5vw"}}>
+                    <a className="gradbutton" href='https://github.com/power-emma/two-stroke'>Source Code</a>
+                </div>
+                <br/>
                 <p style={{position: "relative", zIndex: 1}}>Date Created: January 2026</p>
                 <br/>
             </div>
